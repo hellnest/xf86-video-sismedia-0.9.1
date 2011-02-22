@@ -1,0 +1,25 @@
+From: Andrew Morton <akpm@linux-foundation.org>
+
+drivers/media/video/cx23885/cx23885-i2c.c:288: error: unknown field 'algo_control' specified in initializer
+drivers/media/video/cx23885/cx23885-i2c.c:288: warning: initialization from incompatible pointer type
+
+Cc: Mauro Carvalho Chehab <mchehab@infradead.org>
+Cc: Jean Delvare <khali@linux-fr.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ drivers/media/video/cx23885/cx23885-i2c.c |    1 -
+ 1 file changed, 1 deletion(-)
+
+diff -puN drivers/media/video/cx23885/cx23885-i2c.c~git-dvb-vs-i2c-tree drivers/media/video/cx23885/cx23885-i2c.c
+--- a/drivers/media/video/cx23885/cx23885-i2c.c~git-dvb-vs-i2c-tree
++++ a/drivers/media/video/cx23885/cx23885-i2c.c
+@@ -285,7 +285,6 @@ static u32 cx23885_functionality(struct 
+ 
+ static struct i2c_algorithm cx23885_i2c_algo_template = {
+ 	.master_xfer	= i2c_xfer,
+-	.algo_control	= cx23885_algo_control,
+ 	.functionality	= cx23885_functionality,
+ };
+ 
+_

@@ -1,0 +1,31 @@
+From: Andrew Morton <akpm@linux-foundation.org>
+
+mips allmodconfig:
+
+ERROR: "font_vga_8x16" [drivers/video/console/newport_con.ko] undefined!
+
+Cc: Ralf Baechle <ralf@linux-mips.org>
+Cc: "Antonino A. Daplas" <adaplas@pol.net>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ drivers/video/console/font_8x16.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff -puN drivers/video/console/font_8x16.c~export-font_vga_8x16 drivers/video/console/font_8x16.c
+--- a/drivers/video/console/font_8x16.c~export-font_vga_8x16
++++ a/drivers/video/console/font_8x16.c
+@@ -5,6 +5,7 @@
+ /**********************************************/
+ 
+ #include <linux/font.h>
++#include <linux/module.h>
+ 
+ #define FONTDATAMAX 4096
+ 
+@@ -4629,3 +4630,4 @@ const struct font_desc font_vga_8x16 = {
+ 	.data	= fontdata_8x16,
+ 	.pref	= 0,
+ };
++EXPORT_SYMBOL(font_vga_8x16);
+_

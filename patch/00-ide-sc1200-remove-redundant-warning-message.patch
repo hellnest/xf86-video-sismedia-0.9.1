@@ -1,0 +1,27 @@
+[PATCH] sc1200: remove redundant warning message from sc1200_tune_chipset()
+
+ide_config_drive_speed() called by sc1200_set_xfer_mode() already gives
+a meaningful warning message in case of failure.
+
+Acked-by: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Signed-off-by: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+---
+ drivers/ide/pci/sc1200.c |    4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+Index: b/drivers/ide/pci/sc1200.c
+===================================================================
+--- a/drivers/ide/pci/sc1200.c
++++ b/drivers/ide/pci/sc1200.c
+@@ -149,10 +149,8 @@ static int sc1200_tune_chipset(ide_drive
+ 	/*
+ 	 * Tell the drive to switch to the new mode; abort on failure.
+ 	 */
+-	if (sc1200_set_xfer_mode(drive, mode)) {
+-		printk("SC1200: set xfer mode failure\n");
++	if (sc1200_set_xfer_mode(drive, mode))
+ 		return 1;	/* failure */
+-	}
+ 
+ 	switch (mode) {
+ 	case XFER_PIO_4:

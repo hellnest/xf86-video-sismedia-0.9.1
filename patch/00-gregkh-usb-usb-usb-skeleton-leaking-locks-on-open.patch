@@ -1,0 +1,41 @@
+From mgross@linux.intel.com  Tue Sep 25 11:13:23 2007
+From: Mark Gross <mgross@linux.intel.com>
+Date: Mon, 24 Sep 2007 09:28:14 -0700
+Subject: USB: usb-skeleton leaking locks on open
+To: Greg KH <greg@kroah.com>
+Message-ID: <20070924162814.GB5227@linux.intel.com>
+Content-Disposition: inline
+
+This weekend I was hacking around with a trivial USB driver for talking
+to the boot load firmware of a USB Bit Whacker.  It's running the
+MicroChip Pic18 boot loader firmware and I'm putting together a flash
+program for writing new FW to the thing.
+
+Anyway in my use of the usb-skeleton.c as my starting point I discovered
+my test program was getting hung up after attempting to write a buffer.
+The application and driver where hung in a way that required me to
+reboot to get it to clean up so I could try again.
+
+It turned out the code path through skel_open can grap the driver's
+io_mutex lock and forget to release it.
+
+The following patch fixes the problem for me.
+
+Signed-off-by: Mark Gross <mgross@linux.intel.com>
+Cc: Oliver Neukum <oliver@neukum.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+---
+ drivers/usb/usb-skeleton.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/drivers/usb/usb-skeleton.c
++++ b/drivers/usb/usb-skeleton.c
+@@ -125,6 +125,7 @@ static int skel_open(struct inode *inode
+ 
+ 	/* save our object in the file's private structure */
+ 	file->private_data = dev;
++	mutex_unlock(&dev->io_mutex);
+ 
+ exit:
+ 	return retval;

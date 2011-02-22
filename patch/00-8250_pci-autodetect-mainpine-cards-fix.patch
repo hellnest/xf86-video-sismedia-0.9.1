@@ -1,0 +1,22 @@
+From: Alan Cox <alan@lxorguk.ukuu.org.uk>
+
+Signed-off-by: Alan Cox <alan@redhat.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ include/linux/pci_ids.h |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff -puN include/linux/pci_ids.h~8250_pci-autodetect-mainpine-cards-fix include/linux/pci_ids.h
+--- a/include/linux/pci_ids.h~8250_pci-autodetect-mainpine-cards-fix
++++ a/include/linux/pci_ids.h
+@@ -1979,6 +1979,8 @@
+ #define PCI_VENDOR_ID_TOPIC		0x151f
+ #define PCI_DEVICE_ID_TOPIC_TP560	0x0000
+ 
++#define PCI_VENDOR_ID_MAINPINE		0x1522
++#define PCI_DEVICE_ID_MAINPINE_PBRIDGE	0x0100
+ #define PCI_VENDOR_ID_ENE		0x1524
+ #define PCI_DEVICE_ID_ENE_CB712_SD	0x0550
+ #define PCI_DEVICE_ID_ENE_CB712_SD_2	0x0551
+_

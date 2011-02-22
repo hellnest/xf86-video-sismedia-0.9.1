@@ -1,0 +1,31 @@
+From: Eugene Teo <eugeneteo@kernel.sg>
+
+drivers/video/geode/lxfb_core.c: In function 'lxfb_setup':
+drivers/video/geode/lxfb_core.c:564: warning: unused variable 'opt'
+
+Signed-off-by: Eugene Teo <eugeneteo@kernel.sg>
+Cc: "Antonino A. Daplas" <adaplas@pol.net>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ drivers/video/geode/lxfb_core.c |    7 +------
+ 1 files changed, 1 insertion(+), 6 deletions(-)
+
+diff -puN drivers/video/geode/lxfb_core.c~drivers-video-geode-lxfb_corec-fix-lxfb_setup-warning drivers/video/geode/lxfb_core.c
+--- a/drivers/video/geode/lxfb_core.c~drivers-video-geode-lxfb_corec-fix-lxfb_setup-warning
++++ a/drivers/video/geode/lxfb_core.c
+@@ -566,12 +566,7 @@ static int __init lxfb_setup(char *optio
+ 	if (!options || !*options)
+ 		return 0;
+ 
+-	while (1) {
+-		char *opt = strsep(&options, ",");
+-
+-		if (opt == NULL)
+-			break;
+-
++	while ((opt = strsep(&options, ",")) != NULL) {
+ 		if (!*opt)
+ 			continue;
+ 
+_

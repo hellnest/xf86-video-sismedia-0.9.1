@@ -1,0 +1,92 @@
+From: Mel Gorman <mel@csn.ul.ie>
+
+A number of bug reports have been submitted related to memory initialisation
+that would have been easier to debug if the PFN of page addresses were
+available.  The dmesg output is often insufficient to find that information so
+debugging patches need to be sent to the reporting user.
+
+This patch prints out information on the memmap when it is being allocated and
+the sizeof(struct page) when loglevel is set high enough.  In most
+architectures, this output is produced in generic code.  x86_64 and ia64 both
+setup node_mem_map in an architecture-specific manner requiring arch-specfic
+changes.  Th memmap information can be used to translate any valid page
+address into a PFN.  page_to_pfn() cannot be used directly in bad_page()
+because there is no guarantee that the address pointer is valid in any way and
+the translation can produce garbage.
+
+Information on memmap is not printed out for the SPARSEMEM memory model.  This
+only applies to FLATMEM and DISCONTIG configurations.
+
+Signed-off-by: Mel Gorman <mel@csn.ul.ie>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ arch/ia64/mm/contig.c    |    3 +++
+ arch/ia64/mm/discontig.c |    3 +++
+ arch/x86_64/mm/numa.c    |    3 +++
+ mm/page_alloc.c          |    6 ++++++
+ 4 files changed, 15 insertions(+)
+
+diff -puN arch/ia64/mm/contig.c~add-debugging-aid-for-memory-initialisation-problems arch/ia64/mm/contig.c
+--- a/arch/ia64/mm/contig.c~add-debugging-aid-for-memory-initialisation-problems
++++ a/arch/ia64/mm/contig.c
+@@ -275,6 +275,9 @@ paging_init (void)
+ 		 */
+ 		NODE_DATA(0)->node_mem_map = vmem_map +
+ 			find_min_pfn_with_active_regions();
++		printk(KERN_DEBUG
++			"Node %d memmap at 0x%p size %lu first pfn 0x%p\n",
++			0, vmem_map, map_size, NODE_DATA(0)->node_mem_map);
+ 		free_area_init_nodes(max_zone_pfns);
+ 
+ 		printk("Virtual mem_map starts at 0x%p\n", mem_map);
+diff -puN arch/ia64/mm/discontig.c~add-debugging-aid-for-memory-initialisation-problems arch/ia64/mm/discontig.c
+--- a/arch/ia64/mm/discontig.c~add-debugging-aid-for-memory-initialisation-problems
++++ a/arch/ia64/mm/discontig.c
+@@ -681,6 +681,9 @@ void __init paging_init(void)
+ 
+ #ifdef CONFIG_VIRTUAL_MEM_MAP
+ 		NODE_DATA(node)->node_mem_map = vmem_map + pfn_offset;
++		printk(KERN_DEBUG
++			"Node %d memmap at 0x%p size %u first pfn 0x%p\n",
++			node, vmem_map, 0, NODE_DATA(node)->node_mem_map);
+ #endif
+ 		if (mem_data[node].max_pfn > max_pfn)
+ 			max_pfn = mem_data[node].max_pfn;
+diff -puN arch/x86_64/mm/numa.c~add-debugging-aid-for-memory-initialisation-problems arch/x86_64/mm/numa.c
+--- a/arch/x86_64/mm/numa.c~add-debugging-aid-for-memory-initialisation-problems
++++ a/arch/x86_64/mm/numa.c
+@@ -248,6 +248,9 @@ void __init setup_node_zones(int nodeid)
+ 				memmapsize, SMP_CACHE_BYTES, 
+ 				round_down(limit - memmapsize, PAGE_SIZE), 
+ 				limit);
++	printk(KERN_DEBUG "Node %d memmap at 0x%p size %lu first pfn 0x%p\n",
++			nodeid, NODE_DATA(nodeid)->node_mem_map,
++			memmapsize, NODE_DATA(nodeid)->node_mem_map);
+ #endif
+ } 
+ 
+diff -puN mm/page_alloc.c~add-debugging-aid-for-memory-initialisation-problems mm/page_alloc.c
+--- a/mm/page_alloc.c~add-debugging-aid-for-memory-initialisation-problems
++++ a/mm/page_alloc.c
+@@ -3525,6 +3525,9 @@ static void __init_refok alloc_node_mem_
+ 		if (!map)
+ 			map = alloc_bootmem_node(pgdat, size);
+ 		pgdat->node_mem_map = map + (pgdat->node_start_pfn - start);
++		printk(KERN_DEBUG
++			"Node %d memmap at 0x%p size %lu first pfn 0x%p\n",
++			pgdat->node_id, map, size, pgdat->node_mem_map);
+ 	}
+ #ifndef CONFIG_NEED_MULTIPLE_NODES
+ 	/*
+@@ -3962,6 +3965,9 @@ void __init free_area_init_nodes(unsigne
+ 	memset(zone_movable_pfn, 0, sizeof(zone_movable_pfn));
+ 	find_zone_movable_pfns_for_nodes(zone_movable_pfn);
+ 
++	/* Print out the page size for debugging meminit problems */
++	printk(KERN_DEBUG "sizeof(struct page) = %zd\n", sizeof(struct page));
++
+ 	/* Print out the zone ranges */
+ 	printk("Zone PFN ranges:\n");
+ 	for (i = 0; i < MAX_NR_ZONES; i++) {
+_
