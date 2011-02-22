@@ -1,3 +1,13 @@
+  This is a mod version to make it working with the current xorg-server, we still
+  need a help to make a patch on this driver to keep it 'alive' with latest linux
+  update.
+
+  If you using M671 / 672 chipset and wish to collaborate, i really apreciate it.
+
+  Regards,
+  
+  
+  
   Information for SiS and XGI Users
   Thomas Winischhofer  <thomas@winischhofer.net>
   6 July 2005
