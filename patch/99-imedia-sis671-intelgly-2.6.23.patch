@@ -1,0 +1,49 @@
+diff -urN linux-2.6.23.1-orig/drivers/char/agp/sis-agp.c linux-2.6.23.1/drivers/char/agp/sis-agp.c
+--- linux-2.6.23.1-orig/drivers/char/agp/sis-agp.c	2007-10-12 19:43:44.000000000 +0300
++++ linux-2.6.23.1/drivers/char/agp/sis-agp.c	2007-11-07 10:46:49.000000000 +0200
+@@ -331,6 +331,22 @@
+ 		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
+ 		.class_mask	= ~0,
+ 		.vendor		= PCI_VENDOR_ID_SI,
++		.device		= PCI_DEVICE_ID_SI_662,
++		.subvendor	= PCI_ANY_ID,
++		.subdevice	= PCI_ANY_ID,
++	},
++	{
++		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
++		.class_mask	= ~0,
++		.vendor		= PCI_VENDOR_ID_SI,
++		.device		= PCI_DEVICE_ID_SI_671,
++		.subvendor	= PCI_ANY_ID,
++		.subdevice	= PCI_ANY_ID,
++	},
++	{
++		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
++		.class_mask	= ~0,
++		.vendor		= PCI_VENDOR_ID_SI,
+ 		.device		= PCI_DEVICE_ID_SI_730,
+ 		.subvendor	= PCI_ANY_ID,
+ 		.subdevice	= PCI_ANY_ID,
+diff -urN linux-2.6.23.1-orig/drivers/char/drm/drm_pciids.h linux-2.6.23.1/drivers/char/drm/drm_pciids.h
+--- linux-2.6.23.1-orig/drivers/char/drm/drm_pciids.h	2007-10-12 19:43:44.000000000 +0300
++++ linux-2.6.23.1/drivers/char/drm/drm_pciids.h	2007-11-07 10:48:10.000000000 +0200
+@@ -218,6 +218,7 @@
+ 	{0x1039, 0x5300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0}, \
+ 	{0x1039, 0x6300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0}, \
+ 	{0x1039, 0x6330, PCI_ANY_ID, PCI_ANY_ID, 0, 0, SIS_CHIP_315}, \
++	{0x1039, 0x6351, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0}, /* new add */ \
+ 	{0x1039, 0x7300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0}, \
+ 	{0x18CA, 0x0040, PCI_ANY_ID, PCI_ANY_ID, 0, 0, SIS_CHIP_315}, \
+ 	{0x18CA, 0x0042, PCI_ANY_ID, PCI_ANY_ID, 0, 0, SIS_CHIP_315}, \
+diff -urN linux-2.6.23.1-orig/include/linux/pci_ids.h linux-2.6.23.1/include/linux/pci_ids.h
+--- linux-2.6.23.1-orig/include/linux/pci_ids.h	2007-11-05 11:35:50.000000000 +0200
++++ linux-2.6.23.1/include/linux/pci_ids.h	2007-11-07 10:49:16.000000000 +0200
+@@ -654,6 +654,8 @@
+ #define PCI_DEVICE_ID_SI_651		0x0651
+ #define PCI_DEVICE_ID_SI_655		0x0655
+ #define PCI_DEVICE_ID_SI_661		0x0661
++#define PCI_DEVICE_ID_SI_662           0x0662  /* new add */
++#define PCI_DEVICE_ID_SI_671           0x0671  /* new add */
+ #define PCI_DEVICE_ID_SI_730		0x0730
+ #define PCI_DEVICE_ID_SI_733		0x0733
+ #define PCI_DEVICE_ID_SI_630_VGA	0x6300
