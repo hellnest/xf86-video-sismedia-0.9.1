@@ -1,0 +1,39 @@
+From f8cd5ee84134ea807d783205e8d654a17fcad9e5 Mon Sep 17 00:00:00 2001
+From: Dave Airlie <airlied@redhat.com>
+Date: Tue, 28 Jul 2009 05:22:41 +0000
+Subject: [PATCH 10/13] sis: change to using ABI version check
+
+---
+ src/sis.h        |    2 +-
+ src/sis_driver.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/sis.h b/src/sis.h
+index f1f6eb0..04292f2 100644
+--- a/src/sis.h
++++ b/src/sis.h
+@@ -64,7 +64,7 @@
+ #include "xf86Pci.h"
+ #include "xf86Priv.h"
+ #include "xf86_OSproc.h"
+-#ifndef XSERVER_LIBPCIACCESS
++#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+ #include "xf86Resources.h"
+ #endif
+ #include "xf86.h"
+diff --git a/src/sis_driver.c b/src/sis_driver.c
+index 9fe2621..81b6276 100644
+--- a/src/sis_driver.c
++++ b/src/sis_driver.c
+@@ -78,7 +78,7 @@
+ 
+ #include "sis.h"
+ 
+-#ifndef XSERVER_LIBPCIACCESS
++#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+ #include "xf86RAC.h"
+ #endif
+ #include "dixstruct.h"
+-- 
+1.7.1
+

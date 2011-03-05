@@ -1,0 +1,26 @@
+From 02016b88d4009afef47450bf3deebbe5ecaa12d2 Mon Sep 17 00:00:00 2001
+From: Paulo Zanoni <pzanoni@mandriva.com>
+Date: Wed, 9 Feb 2011 09:22:25 -0200
+Subject: [PATCH 11/13] More RAC removal
+
+---
+ src/sis_hwmc.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/src/sis_hwmc.c b/src/sis_hwmc.c
+index cfb9c95..ced2e84 100644
+--- a/src/sis_hwmc.c
++++ b/src/sis_hwmc.c
+@@ -43,7 +43,9 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ 
+ #include "xf86.h"
+ #include "xf86_OSproc.h"
++#ifndef GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+ #include "xf86Resources.h"
++#endif
+ #include "compiler.h"
+ #include "xf86PciInfo.h"
+ #include "xf86Pci.h"
+-- 
+1.7.1
+
