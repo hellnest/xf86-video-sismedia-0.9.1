@@ -349,7 +349,7 @@ SISInitVideo(ScreenPtr pScreen)
        if(newAdaptor)     size++;
        if(newBlitAdaptor) size++;
 
-       newAdaptors = xalloc(size * sizeof(XF86VideoAdaptorPtr*));
+       newAdaptors = malloc(size * sizeof(XF86VideoAdaptorPtr*));
        if(newAdaptors) {
           if(num_adaptors) {
              memcpy(newAdaptors, adaptors, num_adaptors * sizeof(XF86VideoAdaptorPtr));
@@ -379,7 +379,7 @@ SISInitVideo(ScreenPtr pScreen)
     }
 
     if(newAdaptors) {
-       xfree(newAdaptors);
+       free(newAdaptors);
     }
 
 #ifdef ENABLEXvMC
@@ -1049,7 +1049,7 @@ SISSetupImageVideo(ScreenPtr pScreen)
     }
 #endif
 
-    if(!(adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
+    if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
                             sizeof(SISPortPrivRec) +
                             sizeof(DevUnion)))) {
        return NULL;
@@ -4543,7 +4543,7 @@ SISSetupBlitVideo(ScreenPtr pScreen)
    }
 #endif
 
-   if(!(adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
+   if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
     			   (sizeof(DevUnion) * NUM_BLIT_PORTS) +
                            sizeof(SISBPortPrivRec)))) {
       return NULL;

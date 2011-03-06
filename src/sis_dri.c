@@ -156,19 +156,19 @@ SISInitVisualConfigs(ScreenPtr pScreen)
   case 32:
     numConfigs = (useZ16) ? 8 : 16;
 
-    if(!(pConfigs = (__GLXvisualConfig*)xcalloc(sizeof(__GLXvisualConfig),
+    if(!(pConfigs = (__GLXvisualConfig*)calloc(sizeof(__GLXvisualConfig),
 						   numConfigs))) {
        return FALSE;
     }
-    if(!(pSISConfigs = (SISConfigPrivPtr)xcalloc(sizeof(SISConfigPrivRec),
+    if(!(pSISConfigs = (SISConfigPrivPtr)calloc(sizeof(SISConfigPrivRec),
 						    numConfigs))) {
-       xfree(pConfigs);
+       free(pConfigs);
        return FALSE;
     }
-    if(!(pSISConfigPtrs = (SISConfigPrivPtr*)xcalloc(sizeof(SISConfigPrivPtr),
+    if(!(pSISConfigPtrs = (SISConfigPrivPtr*)calloc(sizeof(SISConfigPrivPtr),
 							  numConfigs))) {
-       xfree(pConfigs);
-       xfree(pSISConfigs);
+       free(pConfigs);
+       free(pSISConfigs);
        return FALSE;
     }
     for(i=0; i<numConfigs; i++) pSISConfigPtrs[i] = &pSISConfigs[i];
@@ -330,7 +330,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
      pDRIInfo->busIdString = DRICreatePCIBusID(pSIS->PciInfo);
   } else {
 #endif
-     pDRIInfo->busIdString = xalloc(64);
+     pDRIInfo->busIdString = malloc(64);
      sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
 	     pSIS->PciBus, pSIS->PciDevice, pSIS->PciFunc);
 #ifdef SISHAVECREATEBUSID
@@ -389,7 +389,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
   pDRIInfo->SAREASize = SAREA_MAX;
 #endif
 
-  if(!(pSISDRI = (SISDRIPtr)xcalloc(sizeof(SISDRIRec), 1))) {
+  if(!(pSISDRI = (SISDRIPtr)calloc(sizeof(SISDRIRec), 1))) {
      DRIDestroyInfoRec(pSIS->pDRIInfo);
      pSIS->pDRIInfo = 0;
      return FALSE;
@@ -407,7 +407,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
 
   if(!DRIScreenInit(pScreen, pDRIInfo, &pSIS->drmSubFD)) {
      xf86DrvMsg(pScreen->myNum, X_ERROR, "[dri] DRIScreenInit failed. Disabling the DRI.\n");
-     xfree(pDRIInfo->devPrivate);
+     free(pDRIInfo->devPrivate);
      pDRIInfo->devPrivate = 0;
      DRIDestroyInfoRec(pSIS->pDRIInfo);
      pSIS->pDRIInfo = 0;
@@ -867,7 +867,7 @@ SISDRICloseScreen(ScreenPtr pScreen)
 
   if(pSIS->pDRIInfo) {
      if(pSIS->pDRIInfo->devPrivate) {
-	xfree(pSIS->pDRIInfo->devPrivate);
+	free(pSIS->pDRIInfo->devPrivate);
 	pSIS->pDRIInfo->devPrivate = NULL;
      }
      DRIDestroyInfoRec(pSIS->pDRIInfo);
@@ -875,12 +875,12 @@ SISDRICloseScreen(ScreenPtr pScreen)
   }
 
   if(pSIS->pVisualConfigs) {
-     xfree(pSIS->pVisualConfigs);
+     free(pSIS->pVisualConfigs);
      pSIS->pVisualConfigs = NULL;
   }
 
   if(pSIS->pVisualConfigsPriv) {
-     xfree(pSIS->pVisualConfigsPriv);
+     free(pSIS->pVisualConfigsPriv);
      pSIS->pVisualConfigsPriv = NULL;
   }
 

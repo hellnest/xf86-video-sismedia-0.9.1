@@ -1450,7 +1450,7 @@ SiSVGASaveFonts(ScrnInfoPtr pScrn)
     attr10 = SiS_ReadAttr(pSiS, 0x10);
     if(attr10 & 0x01) return;
 
-    if(!(pSiS->fonts = xalloc(SIS_FONTS_SIZE * 2))) {
+    if(!(pSiS->fonts = malloc(SIS_FONTS_SIZE * 2))) {
        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"Could not save console fonts, mem allocation failed\n");
        return;

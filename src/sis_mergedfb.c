@@ -170,13 +170,13 @@ SiSCopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest,
     char namebuffer[32], namebuf1[64], namebuf2[64];
     char printbuffer[256];
 
-    if(!((mode = xalloc(sizeof(DisplayModeRec)))))
+    if(!((mode = malloc(sizeof(DisplayModeRec)))))
        return dest;
 
     memcpy(mode, i, sizeof(DisplayModeRec));
 
-    if(!((mode->Private = xalloc(sizeof(SiSMergedDisplayModeRec))))) {
-       xfree(mode);
+    if(!((mode->Private = malloc(sizeof(SiSMergedDisplayModeRec))))) {
+       free(mode);
        return dest;
     }
 
@@ -265,8 +265,8 @@ SiSCopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest,
 		"Skipped \"%s\" (%dx%d), not enough video RAM or beyond hardware specs\n",
 		mode->name, mode->HDisplay, mode->VDisplay);
        }
-       xfree(mode->Private);
-       xfree(mode);
+       free(mode->Private);
+       free(mode);
 
        return dest;
     }
@@ -306,7 +306,7 @@ SiSCopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest,
 
     /* Generate a mode name */
     sprintf(namebuffer, "%dx%d", mode->HDisplay, mode->VDisplay);
-    if((mode->name = xalloc(strlen(namebuffer) + 1))) {
+    if((mode->name = malloc(strlen(namebuffer) + 1))) {
        strcpy(mode->name, namebuffer);
     }
 
@@ -849,7 +849,7 @@ SiSMFBInitMergedFB(ScrnInfoPtr pScrn)
 
     if(pSiS->MergedFB) {
 
-       pSiS->CRT2pScrn->monitor = xalloc(sizeof(MonRec));
+       pSiS->CRT2pScrn->monitor = malloc(sizeof(MonRec));
 
        if(pSiS->CRT2pScrn->monitor) {
 
@@ -889,7 +889,7 @@ SiSMFBInitMergedFB(ScrnInfoPtr pScrn)
        } else {
 
 	  SISErrorLog(pScrn, "Failed to allocate memory for CRT2 monitor, MergedFB mode disabled.\n");
-	  if(pSiS->CRT2pScrn) xfree(pSiS->CRT2pScrn);
+	  if(pSiS->CRT2pScrn) free(pSiS->CRT2pScrn);
 	  pSiS->CRT2pScrn = NULL;
 	  pSiS->MergedFB = FALSE;
 
@@ -911,9 +911,9 @@ SiSFreeCRT2Structs(SISPtr pSiS)
 		xf86DeleteMode(&pSiS->CRT2pScrn->monitor->Modes, pSiS->CRT2pScrn->monitor->Modes);
 	  }
 	  pSiS->CRT2pScrn->monitor->DDC = NULL;
-	  xfree(pSiS->CRT2pScrn->monitor);
+	  free(pSiS->CRT2pScrn->monitor);
        }
-       xfree(pSiS->CRT2pScrn);
+       free(pSiS->CRT2pScrn);
        pSiS->CRT2pScrn = NULL;
     }
 }
@@ -1917,7 +1917,7 @@ SiSTellChanged(WindowPtr pWin, pointer value)
     ClientPtr				client;
     xXineramaLayoutChangeNotifyEvent	se;
 
-    pHead = (SiSXineramaEventPtr *)LookupIDByType(pWin->drawable.id, EventType);
+    dixLookupResourceByType((pointer) &pHead, pWin->drawable.id, EventType, NullClient, DixUnknownAccess);
     if(!pHead) {
        return WT_WALKCHILDREN;
     }
@@ -2628,6 +2628,7 @@ SiSProcXineramaSelectInput(ClientPtr client)
     WindowPtr pWin;
     SiSXineramaEventPtr pXineramaEvent, pNewXineramaEvent, *pHead;
     XID clientResource;
+    int lookup_ret;
 
     REQUEST_SIZE_MATCH(xXineramaSelectInputReq);
     /*IvansLee define NEW_XORG_VERSION.*/
@@ -2640,9 +2641,10 @@ SiSProcXineramaSelectInput(ClientPtr client)
     if(!pWin)
        return BadWindow;
     #if NEW_XORG_VERSION == 1 /*New Xorg Version >= 1.4 */
-     pHead = (SiSXineramaEventPtr *)SecurityLookupIDByType(client,
-						 pWin->drawable.id, EventType,
-						 DixWriteAccess);
+	 lookup_ret = dixLookupResourceByType((pointer) &pHead, 
+						 pWin->drawable.id, EventType, 
+						 client, DixWriteAccess);
+	 pHead = (lookup_ret == Success ? pHead : NULL);
     #else
       pHead = (SiSXineramaEventPtr *)SecurityLookupIDByType(client,
                                                  pWin->drawable.id, EventType,
@@ -2661,7 +2663,7 @@ SiSProcXineramaSelectInput(ClientPtr client)
        }
 
        /* Build a new entry */
-       if(!(pNewXineramaEvent = (SiSXineramaEventPtr)xalloc(sizeof(SiSXineramaEventRec)))) {
+       if(!(pNewXineramaEvent = (SiSXineramaEventPtr)malloc(sizeof(SiSXineramaEventRec)))) {
 	  return BadAlloc;
        }
        pNewXineramaEvent->next = 0;
@@ -2686,7 +2688,7 @@ SiSProcXineramaSelectInput(ClientPtr client)
 	* done through the resource database.
 	*/
        if(!pHead) {
-	  pHead = (SiSXineramaEventPtr *)xalloc(sizeof(SiSXineramaEventPtr));
+	  pHead = (SiSXineramaEventPtr *)malloc(sizeof(SiSXineramaEventPtr));
 	  if(!pHead || !AddResource(pWin->drawable.id, EventType, (pointer)pHead)) {
 	     FreeResource(clientResource, RT_NONE);
 	     return BadAlloc;
@@ -2715,7 +2717,7 @@ SiSProcXineramaSelectInput(ClientPtr client)
 	     } else {
 		*pHead = pXineramaEvent->next;
 	     }
-	     xfree(pXineramaEvent);
+	     free(pXineramaEvent);
 	     SiSXineramaClientsListening--;
 	  }
        }
@@ -2854,7 +2856,7 @@ SiSXineramaResetProc(ExtensionEntry* extEntry)
 {
     /* Called by CloseDownExtensions() */
     if(SiSXineramadataPtr) {
-       Xfree(SiSXineramadataPtr);
+       free(SiSXineramadataPtr);
        SiSXineramadataPtr = NULL;
     }
 }
@@ -2866,7 +2868,7 @@ SiSXineramaFreeClient(pointer data, XID id)
     SiSXineramaEventPtr *pHead, pCur, pPrev;
     WindowPtr pWin = pXineramaEvent->window;
 
-    pHead = (SiSXineramaEventPtr *)LookupIDByType(pWin->drawable.id, EventType);
+    dixLookupResourceByType((pointer) &pHead, pWin->drawable.id, EventType, NullClient, DixUnknownAccess);
     if(pHead) {
        pPrev = NULL;
        for(pCur = *pHead; pCur && pCur != pXineramaEvent; pCur = pCur->next) {
@@ -2877,7 +2879,7 @@ SiSXineramaFreeClient(pointer data, XID id)
 	  else      *pHead = pXineramaEvent->next;
        }
     }
-    xfree((pointer)pXineramaEvent);
+    free((pointer)pXineramaEvent);
     return 1;
 }
 
@@ -2890,9 +2892,9 @@ SiSXineramaFreeEvents(pointer data, XID id)
     for(pCur = *pHead; pCur; pCur = pNext) {
        pNext = pCur->next;
        FreeResource(pCur->clientResource, ClientType);
-       xfree((pointer)pCur);
+       free((pointer)pCur);
     }
-    xfree((pointer)pHead);
+    free((pointer)pHead);
     return 1;
 }
 
@@ -2965,7 +2967,7 @@ SiSXineramaExtensionInit(ScrnInfoPtr pScrn)
 	  if(!pSiS->XineramaExtEntry) break;
 
 	  if(!(SiSXineramadataPtr = (SiSXineramaData *)
-	        xcalloc(SiSXineramaNumScreens, sizeof(SiSXineramaData)))) break;
+	        calloc(SiSXineramaNumScreens, sizeof(SiSXineramaData)))) break;
 
 	  SiSXineramaEventbase = pSiS->XineramaExtEntry->eventBase;
 	  EventSwapVector[SiSXineramaEventbase + XineramaLayoutChangeNotify] =

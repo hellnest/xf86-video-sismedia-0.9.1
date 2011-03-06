@@ -1253,11 +1253,11 @@ SiSHWCursorInit(ScreenPtr pScreen)
     SISPtr pSiS = SISPTR(pScrn);
     xf86CursorInfoPtr infoPtr;
 
-    if(!(pSiS->CursorScratch = xcalloc(1, max(2048, pSiS->CursorSize))))
+    if(!(pSiS->CursorScratch = calloc(1, max(2048, pSiS->CursorSize))))
        return FALSE;
 
     if(!(infoPtr = xf86CreateCursorInfoRec())) {
-       xfree(pSiS->CursorScratch);
+       free(pSiS->CursorScratch);
        pSiS->CursorScratch = NULL;
        return FALSE;
     }

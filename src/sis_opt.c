@@ -459,7 +459,7 @@ SiSOptions(ScrnInfoPtr pScrn)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    if(!(pSiS->Options = xalloc(sizeof(SISOptions)))) return;
+    if(!(pSiS->Options = malloc(sizeof(SISOptions)))) return;
 
     memcpy(pSiS->Options, SISOptions, sizeof(SISOptions));
 
@@ -920,7 +920,7 @@ SiSOptions(ScrnInfoPtr pScrn)
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2POS))) {
 	     int result;
 	     Bool valid = FALSE;
-	     char *tempstr = xalloc(strlen(strptr) + 1);
+	     char *tempstr = malloc(strlen(strptr) + 1);
 	     result = sscanf(strptr, "%s %d", tempstr, &ival);
 	     if(result >= 1) {
 		if(!xf86NameCmp(tempstr,"LeftOf")) {
@@ -978,18 +978,18 @@ SiSOptions(ScrnInfoPtr pScrn)
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		    "Except for \"Clone\", the parameter may be followed by an integer.\n");
 	     }
-	     xfree(tempstr);
+	     free(tempstr);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_METAMODES))) {
-	     pSiS->MetaModes = xalloc(strlen(strptr) + 1);
+	     pSiS->MetaModes = malloc(strlen(strptr) + 1);
 	     if(pSiS->MetaModes) memcpy(pSiS->MetaModes, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2HSYNC))) {
-	     pSiS->CRT2HSync = xalloc(strlen(strptr) + 1);
+	     pSiS->CRT2HSync = malloc(strlen(strptr) + 1);
 	     if(pSiS->CRT2HSync) memcpy(pSiS->CRT2HSync, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2VREFRESH))) {
-	     pSiS->CRT2VRefresh = xalloc(strlen(strptr) + 1);
+	     pSiS->CRT2VRefresh = malloc(strlen(strptr) + 1);
 	     if(pSiS->CRT2VRefresh) memcpy(pSiS->CRT2VRefresh, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_MERGEDDPI))) {
@@ -1009,8 +1009,8 @@ SiSOptions(ScrnInfoPtr pScrn)
 	     }
 	     if(pSiS->UseSiSXinerama) {
 	        if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_SCR0))) {
-	           char *tempstr1 = xalloc(strlen(strptr) + 1);
-	           char *tempstr2 = xalloc(strlen(strptr) + 1);
+	           char *tempstr1 = malloc(strlen(strptr) + 1);
+	           char *tempstr2 = malloc(strlen(strptr) + 1);
 	           char *tempstr;
 		   int i, result;
 		   pSiS->MFBScr0LR = pSiS->MFBScr0TB = -1;
@@ -1037,8 +1037,8 @@ SiSOptions(ScrnInfoPtr pScrn)
 			"Bad or incomplete argument(s) for Option \"%s\"\n",
 			pSiS->Options[SiS_FIFT(pSiS->Options, OPTION_SCR0)].name);
 		   }
-		   xfree(tempstr1);
-		   xfree(tempstr2);
+		   free(tempstr1);
+		   free(tempstr2);
 	        } else if(xf86GetOptValBool(pSiS->Options, OPTION_CRT2ISSCRN0, &val)) {
 		   xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 			"Option \"%s\" is deprecated, use \"%s\"\n",
