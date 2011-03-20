@@ -109,8 +109,12 @@ static int 	SISPutImage(ScrnInfoPtr,
 			short, short, short, short, short, short, short, short,
 			int, UChar *, short, short, Bool, RegionPtr, pointer);
 static int	SISReputImage(ScrnInfoPtr pScrn,
-			short drw_x, short drw_y,
-			RegionPtr clipBoxes, pointer data);
+                      int drw_x, int drw_y,
+                      int16_t winbox_x, int16_t winbox_y,
+                      int vid_w, int vid_h,
+                      int drw_w, int drw_h,
+                      RegionPtr clipBoxes, pointer data,
+                      DrawablePtr pDraw);
 static int 	SISQueryImageAttributes(ScrnInfoPtr,
 			int, UShort *, UShort *, int *, int *);
 static void 	SISVideoTimerCallback(ScrnInfoPtr pScrn, Time now);
