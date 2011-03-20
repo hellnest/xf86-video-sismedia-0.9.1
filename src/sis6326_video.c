@@ -571,7 +571,7 @@ SIS6326SetupImageVideo(ScreenPtr pScreen)
     adapt->SetPortAttribute = SIS6326SetPortAttribute;
     adapt->GetPortAttribute = SIS6326GetPortAttribute;
     adapt->QueryBestSize = SIS6326QueryBestSize;
-    adapt->PutImage = SIS6326PutImage;
+    adapt->PutImage = (PutImageFuncPtr)SIS6326PutImage;
     adapt->QueryImageAttributes = SIS6326QueryImageAttributes;
 
     pPriv->videoStatus = 0;

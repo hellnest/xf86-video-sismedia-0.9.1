@@ -1124,8 +1124,8 @@ SISSetupImageVideo(ScreenPtr pScreen)
     adapt->SetPortAttribute = SISSetPortAttribute;
     adapt->GetPortAttribute = SISGetPortAttribute;
     adapt->QueryBestSize = SISQueryBestSize;
-    adapt->PutImage = SISPutImage;
-    adapt->ReputImage = SISReputImage;
+    adapt->PutImage = (PutImageFuncPtr)SISPutImage;
+    adapt->ReputImage = (ReputImageFuncPtr)SISReputImage;
     adapt->QueryImageAttributes = SISQueryImageAttributes;
 
     /* gotta uninit this someplace */
