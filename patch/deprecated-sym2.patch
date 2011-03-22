@@ -1,3 +1,6 @@
+This patch for remove all depreceated / obselete symbol on compiling
+Contributor saa7_go < saa7.go@gmail.com > 
+
 diff -u xf86-video-sismedia-0.9.1/src/initextx.c xf86-video-sismedia-0.9.1-dep-clean/src/initextx.c
 --- xf86-video-sismedia-0.9.1/src/initextx.c	2011-03-06 11:27:56.368767584 +0700
 +++ xf86-video-sismedia-0.9.1-dep-clean/src/initextx.c	2011-03-06 11:34:50.298266877 +0700
