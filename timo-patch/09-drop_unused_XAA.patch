@@ -1,0 +1,222 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis310_accel.c |  176 ----------------------------------------------------
+ 1 files changed, 0 insertions(+), 176 deletions(-)
+
+diff --git a/src/sis310_accel.c b/src/sis310_accel.c
+index befb095..26c4c00 100644
+--- a/src/sis310_accel.c
++++ b/src/sis310_accel.c
+@@ -56,18 +56,6 @@
+ 
+ #ifdef SIS_USE_XAA
+ 
+-#undef TRAP		/* Use/Don't use Trapezoid Fills
+-			 * DOES NOT WORK. XAA sometimes provides illegal
+-			 * trapezoid data (left and right edges cross each
+-			 * other) which causes drawing errors. Since
+-			 * checking the trapezoid for such a case is very
+-			 * time-intensive, it is faster to let it be done
+-			 * by the generic polygon functions.
+-			 * Does not work on 330 series at all, hangs the engine.
+-			 * Even with correct trapezoids, this is slower than
+-			 * doing it by the CPU.
+-                         */
+-
+ #undef CTSCE		/* Use/Don't use CPUToScreenColorExpand. Disabled
+ 			 * because it is slower than doing it by the CPU.
+ 			 * Indirect mode does not work in VRAM queue mode.
+@@ -424,85 +412,6 @@ SiSSubsequentSolidFillRect(ScrnInfoPtr pScrn,
+ 
+ #ifdef SIS_USE_XAA  /* ---------------------------- XAA -------------------------- */
+ 
+-/* Trapezoid */
+-/* This would work better if XAA would provide us with valid trapezoids.
+- * In fact, with small trapezoids the left and the right edge often cross
+- * each other which causes drawing errors (filling over whole scanline).
+- * DOES NOT WORK ON 330 SERIES, HANGS THE ENGINE.
+- */
+-#ifdef TRAP
+-static void
+-SiSSubsequentSolidFillTrap(ScrnInfoPtr pScrn, int y, int h,
+-			int left,  int dxL, int dyL, int eL,
+-			int right, int dxR, int dyR, int eR )
+-{
+-	SISPtr pSiS = SISPTR(pScrn);
+-	CARD32 dstbase = 0;
+-
+-	if(y >= 2048) {
+-	   dstbase = pSiS->scrnOffset * y;
+-	   y = 0;
+-	}
+-
+-	dstbase += FBOFFSET;
+-
+-#ifdef SISVRAMQ	/* Not optimized yet */
+-	SiSCheckQueue(16 * 10)
+-#else
+-	SiSSetupDSTBase(dstbase)
+-#endif
+-
+-#if 1
+-	SiSSetupPATFG(0xff0000) /* FOR TESTING */
+-#endif
+-
+-	/* Clear CommandReg because SetUp can be used for Rect and Trap */
+-	pSiS->CommandReg &= ~(T_L_X_INC | T_L_Y_INC |
+-	                      T_R_X_INC | T_R_Y_INC |
+-	                      T_XISMAJORL | T_XISMAJORR |
+-			      BITBLT);
+-
+-        xf86DrvMsg(0, X_INFO, "Trap (%d %d %d %d) dxL %d dyL %d eL %d   dxR %d dyR %d eR %d\n",
+-		left, right, y, h, dxL, dyL, eL, dxR, dyR, eR);
+-
+-	/* Determine egde angles */
+-	if(dxL < 0) 	{ dxL = -dxL; }
+-	else 		{ SiSSetupCMDFlag(T_L_X_INC) }
+-	if(dxR < 0) 	{ dxR = -dxR; }
+-	else 		{ SiSSetupCMDFlag(T_R_X_INC) }
+-
+-	/* (Y direction always positive - do this anyway) */
+-	if(dyL < 0) 	{ dyL = -dyL; }
+-	else 		{ SiSSetupCMDFlag(T_L_Y_INC) }
+-	if(dyR < 0) 	{ dyR = -dyR; }
+-	else 		{ SiSSetupCMDFlag(T_R_Y_INC) }
+-
+-	/* Determine major axis */
+-	if(dxL >= dyL) {  SiSSetupCMDFlag(T_XISMAJORL) }
+-	if(dxR >= dyR) {  SiSSetupCMDFlag(T_XISMAJORR) }
+-
+-	SiSSetupCMDFlag(TRAPAZOID_FILL);
+-
+-#ifdef SISVRAMQ
+-	SiSSetupYHLR(y, h, left, right)
+-	SiSSetupdLdR(dxL, dyL, dxR, dyR)
+-	SiSSetupELER(eL, eR)
+-	SiSSetupDSTBaseDoCMD(dstbase)
+-#else
+-	/* Set up deltas */
+-	SiSSetupdL(dxL, dyL)
+-	SiSSetupdR(dxR, dyR)
+-	/* Set up y, h, left, right */
+-	SiSSetupYH(y, h)
+-	SiSSetupLR(left, right)
+-	/* Set up initial error term */
+-	SiSSetupEL(eL)
+-	SiSSetupER(eR)
+-	SiSDoCMD
+-#endif
+-}
+-#endif
+-
+ static void
+ SiSSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop,
+ 			unsigned int planemask)
+@@ -748,73 +657,6 @@ SiSSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
+ #endif
+ }
+ 
+-/* --- Trapezoid --- */
+-
+-/* Does not work at all on 330 series */
+-
+-#ifdef TRAP
+-static void
+-SiSSubsequentMonoPatternFillTrap(ScrnInfoPtr pScrn,
+-			int patx, int paty,
+-			int y, int h,
+-			int left, int dxL, int dyL, int eL,
+-			int right, int dxR, int dyR, int eR)
+-{
+-	SISPtr pSiS = SISPTR(pScrn);
+-	CARD32 dstbase = 0;
+-
+-	if(y >= 2048) {
+-	   dstbase=pSiS->scrnOffset*y;
+-	   y = 0;
+-	}
+-
+-	dstbase += FBOFFSET;
+-
+-#ifdef SISVRAMQ
+-	SiSCheckQueue(16 * 4);
+-#else
+-	SiSSetupDSTBase(dstbase)
+-#endif
+-
+-	/* Clear CommandReg because SetUp can be used for Rect and Trap */
+-	pSiS->CommandReg &= ~(T_XISMAJORL | T_XISMAJORR |
+-			      T_L_X_INC | T_L_Y_INC |
+-			      T_R_X_INC | T_R_Y_INC |
+-			      BITBLT);
+-
+-	if(dxL < 0) 	{ dxL = -dxL;  }
+-	else 		{ SiSSetupCMDFlag(T_L_X_INC) }
+-	if(dxR < 0) 	{ dxR = -dxR; }
+-	else 		{ SiSSetupCMDFlag(T_R_X_INC) }
+-
+-	if(dyL < 0) 	{ dyL = -dyL; }
+-	else 		{ SiSSetupCMDFlag(T_L_Y_INC) }
+-	if(dyR < 0) 	{ dyR = -dyR; }
+-	else 		{ SiSSetupCMDFlag(T_R_Y_INC) }
+-
+-	/* Determine major axis */
+-	if(dxL >= dyL)  { SiSSetupCMDFlag(T_XISMAJORL) }
+-	if(dxR >= dyR)  { SiSSetupCMDFlag(T_XISMAJORR) }
+-
+-	SiSSetupCMDFlag(TRAPAZOID_FILL);
+-
+-#ifdef SISVRAMQ
+-	SiSSetupYHLR(y, h, left, right)
+-	SiSSetupdLdR(dxL, dyL, dxR, dyR)
+-	SiSSetupELER(eL, eR)
+-	SiSSetupDSTBaseDoCMD(dstbase)
+-#else
+-	SiSSetupYH(y, h)
+-	SiSSetupLR(left, right)
+-	SiSSetupdL(dxL, dyL)
+-	SiSSetupdR(dxR, dyR)
+-	SiSSetupEL(eL)
+-	SiSSetupER(eR)
+-	SiSDoCMD
+-#endif
+-}
+-#endif
+-
+ /* Color 8x8 pattern */
+ 
+ #ifdef SISVRAMQ
+@@ -2046,15 +1888,6 @@ SiS315AccelInit(ScreenPtr pScreen)
+ 	      /* solid fills */
+ 	      infoPtr->SetupForSolidFill = SiSSetupForSolidFill;
+ 	      infoPtr->SubsequentSolidFillRect = SiSSubsequentSolidFillRect;
+-#ifdef TRAP
+-	      if((pSiS->Chipset != PCI_CHIP_SIS660) &&
+-	         (pSiS->Chipset != PCI_CHIP_SIS330) &&
+-	         (pSiS->Chipset != PCI_CHIP_SIS340) &&
+-		 (pSiS->Chipset != PCI_CHIP_XGIXG20) &&
+-		 (pSiS->Chipset != PCI_CHIP_XGIXG40)) {
+-	         infoPtr->SubsequentSolidFillTrap = SiSSubsequentSolidFillTrap;
+-	      }
+-#endif
+ 	      infoPtr->SolidFillFlags = NO_PLANEMASK;
+ 
+ 	      /* solid line */
+@@ -2073,15 +1906,6 @@ SiS315AccelInit(ScreenPtr pScreen)
+ 	      /* 8x8 mono pattern fill */
+ 	      infoPtr->SetupForMono8x8PatternFill = SiSSetupForMonoPatternFill;
+ 	      infoPtr->SubsequentMono8x8PatternFillRect = SiSSubsequentMonoPatternFill;
+-#ifdef TRAP
+-              if((pSiS->Chipset != PCI_CHIP_SIS660) &&
+-	         (pSiS->Chipset != PCI_CHIP_SIS330) &&
+-	         (pSiS->Chipset != PCI_CHIP_SIS340) &&
+-		 (pSiS->Chipset != PCI_CHIP_XGIXG20) &&
+-		 (pSiS->Chipset != PCI_CHIP_XGIXG40)) {
+-	         infoPtr->SubsequentMono8x8PatternFillTrap = SiSSubsequentMonoPatternFillTrap;
+-	      }
+-#endif
+ 	      infoPtr->Mono8x8PatternFillFlags = NO_PLANEMASK |
+ 						 HARDWARE_PATTERN_SCREEN_ORIGIN |
+ 						 HARDWARE_PATTERN_PROGRAMMED_BITS |
+-- 
+1.7.4.1

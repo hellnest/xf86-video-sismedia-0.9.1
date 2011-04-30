@@ -1,0 +1,193 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis.h          |    7 ------
+ src/sis_video.c    |   55 ----------------------------------------------------
+ src/sis_video.h    |    9 --------
+ src/sis_videostr.h |    3 --
+ 4 files changed, 0 insertions(+), 74 deletions(-)
+
+diff --git a/src/sis.h b/src/sis.h
+index 3314471..f40563e 100644
+--- a/src/sis.h
++++ b/src/sis.h
+@@ -212,10 +212,6 @@
+ #endif
+ 
+ #if 0
+-#define SISDEINT		/* Include Xv deinterlacer code (not functional yet!) */
+-#endif
+-
+-#if 0
+ #define XV_SD_DEPRECATED	/* Include deprecated XV SD interface for SiSCtrl */
+ #endif
+ 
+@@ -1253,9 +1249,6 @@ typedef struct {
+     Atom		xvDisableGfx, xvDisableGfxLR, xvTVXPosition, xvTVYPosition;
+     Atom		xvDisableColorkey, xvUseChromakey, xvChromaMin, xvChromaMax;
+     Atom		xvInsideChromakey, xvYUVChromakey, xvVSync;
+-#ifdef SISDEINT
+-    Atom		xvdeintmeth;
+-#endif
+     Atom		xvGammaRed, xvGammaGreen, xvGammaBlue;
+ #ifdef XV_SD_DEPRECATED
+     Atom		xv_QVF, xv_QVV, xv_USD, xv_SVF, xv_QDD, xv_TAF, xv_TSA, xv_TEE, xv_GSF;
+diff --git a/src/sis_video.c b/src/sis_video.c
+index 17d8f71..f134aad 100644
+--- a/src/sis_video.c
++++ b/src/sis_video.c
+@@ -968,9 +968,6 @@ SISSetupImageVideo(ScreenPtr pScreen)
+     pSiS->xvYUVChromakey      = MAKE_ATOM(sisxvyuvchromakey);
+     pSiS->xvChromaMin	      = MAKE_ATOM(sisxvchromamin);
+     pSiS->xvChromaMax         = MAKE_ATOM(sisxvchromamax);
+-#ifdef SISDEINT
+-    pSiS->xvdeintmeth	      = MAKE_ATOM(sisxvdeinterlace);
+-#endif
+ #ifdef XV_SD_DEPRECATED
+     pSiS->xv_QVF              = MAKE_ATOM(sisxvqueryvbflags);
+     pSiS->xv_GDV	      = MAKE_ATOM(sisxvsdgetdriverversion);
+@@ -1212,12 +1209,6 @@ SISSetPortAttribute(ScrnInfoPtr pScrn, Atom attribute,
+      pPriv->chromamin = value;
+   } else if(attribute == pSiS->xvChromaMax) {
+      pPriv->chromamax = value;
+-#ifdef SISDEINT
+-  } else if(attribute == pSiS->xvdeintmeth) {
+-     if(value < 0) value = 0;
+-     if(value > 4) value = 4;
+-     pPriv->deinterlacemethod = value;
+-#endif
+   } else if(attribute == pSiS->xvHue) {
+      if(pSiS->VGAEngine == SIS_315_VGA) {
+         if((value < -8) || (value > 7)) return BadValue;
+@@ -1309,10 +1300,6 @@ SISGetPortAttribute(ScrnInfoPtr pScrn, Atom attribute,
+      *value = pPriv->chromamin;
+   } else if(attribute == pSiS->xvChromaMax) {
+      *value = pPriv->chromamax;
+-#ifdef SISDEINT
+-  } else if(attribute == pSiS->xvdeintmeth) {
+-     *value = pPriv->deinterlacemethod;
+-#endif
+   } else if(attribute == pSiS->xvHue) {
+      if(pSiS->VGAEngine == SIS_315_VGA) {
+         *value = pPriv->hue;
+@@ -2666,26 +2653,7 @@ SISDisplayVideo(ScrnInfoPtr pScrn, SISPortPrivPtr pPriv)
+       overlay.keyOP = VI_ROP_DestKey;
+    }
+ 
+-#ifdef SISDEINT
+-   switch(pPriv->deinterlacemethod) {
+-   case 1:
+-      overlay.bobEnable = 0x02;
+-      /* overlay.bobEnable |= (pPriv->currentBuf) ? 0x00 : 0x10; */
+-      break;
+-   case 2:
+-      overlay.bobEnable = 0x08;
+-      /* overlay.bobEnable |= (pPriv->currentBuf) ? 0x00 : 0x10; */
+-      break;
+-   case 3:
+-      overlay.bobEnable = 0x0a;
+-      /* overlay.bobEnable |= (pPriv->currentBuf) ? 0x00 : 0x10; */
+-      break;
+-   default:
+-#endif
+       overlay.bobEnable = 0x00;    /* Disable BOB de-interlacer */
+-#ifdef SISDEINT
+-   }
+-#endif
+ 
+ #ifdef SISMERGED
+    if(pSiS->MergedFB) {
+@@ -3461,9 +3429,6 @@ SISPutImage(
+    int myreds[] = { 0x000000ff, 0x0000f800, 0, 0x00ff0000 };
+ #endif
+    int totalSize = 0;
+-#ifdef SISDEINT
+-   Bool	deintfm = (pPriv->deinterlacemethod > 1) ? TRUE : FALSE;
+-#endif
+ 
+ #if 0
+    xf86DrvMsg(0, X_INFO, "PutImage: src %dx%d-%dx%d, drw %dx%d-%dx%d, id %x, w %d h %d, buf %p\n",
+@@ -3545,23 +3510,6 @@ SISPutImage(
+    if(!(pPriv->bufAddr[0] = SISAllocateFBMemory(pScrn, &pPriv->handle, totalSize << 1)))
+       return BadAlloc;
+ 
+-#ifdef SISDEINT
+-   if(deintfm) {
+-      pPriv->bufAddr[1] = pPriv->bufAddr[0] + pPriv->srcPitch;
+-
+-      {
+-         CARD8 *src = (CARD8 *)buf;
+-         CARD8 *dest = (CARD8 *)(pSiS->FbBase + pPriv->bufAddr[pPriv->currentBuf]);
+-         int i = height;
+-         while(i--) {
+-	    SiSMemCopyToVideoRam(pSiS, dest, src, pPriv->srcPitch);
+-	    src += pPriv->srcPitch;
+-	    dest += (pPriv->srcPitch << 1);
+-         }
+-      }
+-
+-   } else {
+-#endif
+       pPriv->bufAddr[1] = pPriv->bufAddr[0] + totalSize;
+ 
+       /* copy data */
+@@ -3578,9 +3526,6 @@ SISPutImage(
+ 	    *dest++ = *src++;
+          }
+       }
+-#ifdef SISDEINT
+-   }
+-#endif
+ 
+    SISDisplayVideo(pScrn, pPriv);
+ 
+diff --git a/src/sis_video.h b/src/sis_video.h
+index 7cd63c3..25fadd1 100644
+--- a/src/sis_video.h
++++ b/src/sis_video.h
+@@ -214,9 +214,6 @@ static char sisxvinsidechromakey[] 			= "XV_INSIDE_CHROMAKEY";
+ static char sisxvyuvchromakey[] 			= "XV_YUV_CHROMAKEY";
+ static char sisxvchromamin[] 				= "XV_CHROMAMIN";
+ static char sisxvchromamax[] 				= "XV_CHROMAMAX";
+-#ifdef SISDEINT
+-static char sisxvdeinterlace[]				= "XV_OVERLAY_DEINTERLACING_METHOD";
+-#endif
+ #ifdef XV_SD_DEPRECATED
+ static char sisxvqueryvbflags[] 			= "XV_QUERYVBFLAGS";
+ static char sisxvsdgetdriverversion[] 			= "XV_SD_GETDRIVERVERSION";
+@@ -311,9 +308,6 @@ static XF86AttributeRec SISAttributes_300[] =
+    {XvSettable | XvGettable, 0, 1,             sisxvyuvchromakey},
+    {XvSettable | XvGettable, 0, (1 << 24) - 1, sisxvchromamin},
+    {XvSettable | XvGettable, 0, (1 << 24) - 1, sisxvchromamax},
+-#ifdef SISDEINT
+-   {XvSettable | XvGettable, 0, 4,             sisxvdeinterlace},
+-#endif
+ #ifdef XV_SD_DEPRECATED
+    {             XvGettable, 0, -1,    	       sisxvqueryvbflags},
+    {             XvGettable, 0, -1,	       sisxvsdgetdriverversion},
+@@ -393,9 +387,6 @@ static XF86AttributeRec SISAttributes_315[] =
+    {XvSettable | XvGettable, 0, 1,             sisxvinsidechromakey},
+    {XvSettable | XvGettable, 0, (1 << 24) - 1, sisxvchromamin},
+    {XvSettable | XvGettable, 0, (1 << 24) - 1, sisxvchromamax},
+-#ifdef SISDEINT
+-   {XvSettable | XvGettable, 0, 4,             sisxvdeinterlace},
+-#endif
+ #ifdef XV_SD_DEPRECATED
+    {             XvGettable, 0, -1,    	       sisxvqueryvbflags},
+    {             XvGettable, 0, -1,    	       sisxvsdgetdriverversion},
+diff --git a/src/sis_videostr.h b/src/sis_videostr.h
+index a5b556d..3827c4e 100644
+--- a/src/sis_videostr.h
++++ b/src/sis_videostr.h
+@@ -63,9 +63,6 @@ typedef struct {
+     Bool         usechromakey;
+     Bool	 insidechromakey, yuvchromakey;
+     CARD32	 chromamin, chromamax;
+-#ifdef SISDEINT
+-    int		 deinterlacemethod;
+-#endif
+ 
+     CARD32       videoStatus;
+     Bool	 overlayStatus;
+-- 
+1.7.4.1
+

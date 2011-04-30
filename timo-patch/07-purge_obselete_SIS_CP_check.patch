@@ -1,0 +1,326 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/init.h       |    3 ---
+ src/init301.c    |   14 --------------
+ src/init301.h    |    3 ---
+ src/sis.h        |   11 -----------
+ src/sis_driver.c |   12 ------------
+ src/sis_opt.c    |   16 ----------------
+ src/sis_video.c  |   23 -----------------------
+ src/sis_video.h  |    6 ------
+ 8 files changed, 0 insertions(+), 88 deletions(-)
+
+diff --git a/src/init.h b/src/init.h
+index bc90933..d0ac959 100644
+--- a/src/init.h
++++ b/src/init.h
+@@ -68,9 +68,6 @@
+ #ifdef SIS_LINUX_KERNEL
+ #include "vgatypes.h"
+ #include "vstruct.h"
+-#ifdef SIS_CP
+-#undef SIS_CP
+-#endif
+ #include <linux/config.h>
+ #include <linux/version.h>
+ #include <linux/types.h>
+diff --git a/src/init301.c b/src/init301.c
+index 603ecb6..74bbc4c 100644
+--- a/src/init301.c
++++ b/src/init301.c
+@@ -7354,11 +7354,7 @@ SiS_SetGroup3(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short
+ 
+   if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) return;
+ 
+-#ifndef SIS_CP
+   SiS_SetReg(SiS_Pr->SiS_Part3Port,0x00,0x00);
+-#else
+-  SIS_CP_INIT301_CP
+-#endif
+ 
+   if(SiS_Pr->SiS_TVMode & TVSetPALTiming) {
+      SiS_SetReg(SiS_Pr->SiS_Part3Port,0x13,0xFA);
+@@ -7398,10 +7394,6 @@ SiS_SetGroup3(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short
+ 	}
+      }
+   }
+-
+-#ifdef SIS_CP
+-  SIS_CP_INIT301_CP2
+-#endif
+ }
+ 
+ /*********************************************/
+@@ -8081,9 +8073,7 @@ SiS_SetCHTVReg(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short
+       /* Register 0x3D does not exist in non-macrovision register map
+             (Maybe this is a macrovision register?)
+        */
+-#ifndef SIS_CP
+       SiS_SetCH70xx(SiS_Pr,0x3d,0x00);
+-#endif
+ 
+       /* Register 0x10 only contains 1 writable bit (S0) for sensing,
+              all other bits a read-only. Macrovision?
+@@ -8199,10 +8189,6 @@ SiS_SetCHTVReg(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short
+ 
+    }
+ 
+-#ifdef SIS_CP
+-   SIS_CP_INIT301_CP3
+-#endif
+-
+ }
+ 
+ #ifdef SIS315H  /* ----------- 315 series only ---------- */
+diff --git a/src/init301.h b/src/init301.h
+index 7dca546..d656bad 100644
+--- a/src/init301.h
++++ b/src/init301.h
+@@ -62,9 +62,6 @@
+ #ifdef SIS_LINUX_KERNEL
+ #include "vgatypes.h"
+ #include "vstruct.h"
+-#ifdef SIS_CP
+-#undef SIS_CP
+-#endif
+ #include <linux/config.h>
+ #include <linux/version.h>
+ #include <linux/types.h>
+diff --git a/src/sis.h b/src/sis.h
+index 2144052..7cf81af 100644
+--- a/src/sis.h
++++ b/src/sis.h
+@@ -68,11 +68,6 @@
+ #define TWDEBUG    /* for debugging */
+ #endif
+ 
+-#undef SIS_CP
+-#if 0
+-#include "siscp.H"
+-#endif
+-
+ #include "compiler.h"
+ #include "xf86Pci.h"
+ #include "xf86Priv.h"
+@@ -929,9 +924,6 @@ typedef struct {
+     UShort		MapCountIOPBase;	/* map/unmap queue counter */
+     Bool		forceUnmapIOPBase;	/* ignore counter and unmap */
+ #endif
+-#ifdef SIS_CP
+-    SIS_CP_H_ENT
+-#endif
+ } SISEntRec, *SISEntPtr;
+ #endif
+ 
+@@ -1294,9 +1286,6 @@ typedef struct {
+     int			SiS76xUMASize;
+     int			CRT1isoff;
+     ULong		UMAsize, LFBsize;	/* For SiSCtrl extension info only */
+-#ifdef SIS_CP
+-    SIS_CP_H
+-#endif
+     ULong		ChipFlags;
+     ULong		SiS_SD_Flags, SiS_SD2_Flags, SiS_SD3_Flags, SiS_SD4_Flags;
+     Bool		UseHWARGBCursor;
+diff --git a/src/sis_driver.c b/src/sis_driver.c
+index 61fd515..863ad24 100644
+--- a/src/sis_driver.c
++++ b/src/sis_driver.c
+@@ -4280,9 +4280,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+ 	  pSiSEnt->SenseYPbPr = pSiS->SenseYPbPr;
+ 	  pSiSEnt->XvUseMemcpy = pSiS->XvUseMemcpy;
+ 	  pSiSEnt->BenchMemCpy = pSiS->BenchMemCpy;
+-#ifdef SIS_CP
+-	  SIS_CP_DRIVER_COPYOPTIONSENT
+-#endif
+        } else {
+ 	  /* We always use same cursor type on both screens */
+ 	  pSiS->HWCursor = pSiSEnt->HWCursor;
+@@ -4364,9 +4361,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+ 	  pSiSEnt->NewGammaConR = pSiS->NewGammaConR;
+ 	  pSiSEnt->NewGammaConG = pSiS->NewGammaConG;
+ 	  pSiSEnt->NewGammaConB = pSiS->NewGammaConB;
+-#ifdef SIS_CP
+-	  SIS_CP_DRIVER_COPYOPTIONS
+-#endif
+        }
+     }
+ #endif
+@@ -5514,9 +5508,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+        }
+     }
+ 
+-#ifdef SIS_CP
+-    SIS_CP_DRIVER_RECONFIGOPT
+-#endif
+ 
+     if((pSiS->Chipset == PCI_CHIP_SIS6326) && (pSiS->SiS6326Flags & SIS6326_HASTV)) {
+        if(pSiS->sis6326tvplug != -1) {
+@@ -10478,9 +10469,6 @@ void SiSPreSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode, int viewmode)
+ 	  } else {
+ 	     pSiS->SiS_Pr->SiS_CHSOverScan = FALSE;
+ 	  }
+-#ifdef SIS_CP
+-	  SIS_CP_DRIVER_CONFIG
+-#endif
+ 	  break;
+ 
+        case CRT2_LCD:
+diff --git a/src/sis_opt.c b/src/sis_opt.c
+index d39ff6e..933049e 100644
+--- a/src/sis_opt.c
++++ b/src/sis_opt.c
+@@ -152,9 +152,6 @@ typedef enum {
+     OPTION_FORCE1ASPECT,
+     OPTION_FORCE2ASPECT,
+     OPTION_TVBLUE,
+-#ifdef SIS_CP
+-    SIS_CP_OPT_OPTIONS
+-#endif
+     OPTION_PSEUDO
+ } SISOpts;
+ 
+@@ -293,9 +290,6 @@ static const OptionInfoRec SISOptions[] = {
+     { OPTION_MERGEDFBMOUSER,		"MergedMouseRestriction",	OPTV_BOOLEAN,	{0}, FALSE },
+ #endif
+ #endif
+-#ifdef SIS_CP
+-    SIS_CP_OPTION_DETAIL
+-#endif
+     { -1,				NULL,				OPTV_NONE,	{0}, FALSE }
+ };
+ 
+@@ -597,9 +591,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+     pSiS->CRT2IsScrn0 = FALSE;
+ #endif
+ #endif
+-#ifdef SIS_CP
+-    SIS_CP_OPT_DEFAULT
+-#endif
+ 
+     /* Chipset dependent defaults */
+ 
+@@ -1022,9 +1013,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+ #ifndef SISCHECKOSSSE
+ 		OPTION_XVSSECOPY,
+ #endif
+-#ifdef SIS_CP
+-		SIS_CP_OPT_DH_WARN
+-#endif
+ 		-1
+        };
+ 
+@@ -1864,10 +1852,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+ #endif
+ #endif /* __i386__ || __AMD64__ || __amd64__ */
+ 
+-#ifdef SIS_CP
+-       SIS_CP_OPT_DOOPT
+-#endif
+-
+     }  /* DualHead */
+ 
+     /* CRT1Gamma - enable/disable gamma correction for CRT1
+diff --git a/src/sis_video.c b/src/sis_video.c
+index 2006858..460ad0c 100644
+--- a/src/sis_video.c
++++ b/src/sis_video.c
+@@ -401,9 +401,6 @@ SISSetPortDefaults(ScrnInfoPtr pScrn, SISPortPrivPtr pPriv)
+        pPriv->updatetvxpos = TRUE;
+        pPriv->updatetvypos = TRUE;
+     }
+-#ifdef SIS_CP
+-    SIS_CP_VIDEO_DEF
+-#endif
+     if(pPriv->dualHeadMode) {
+ #ifdef SISDUALHEAD
+        pPriv->crtnum =
+@@ -1041,9 +1038,6 @@ SISSetupImageVideo(ScreenPtr pScreen)
+     pSiS->xv_STR	      = MAKE_ATOM(sisxvsetreg);
+ #endif
+ #endif /* XV_SD_DEPRECATED */
+-#ifdef SIS_CP
+-    SIS_CP_VIDEO_ATOMS
+-#endif
+ 
+     pSiS->xv_sisdirectunlocked = 0;
+ #ifdef XV_SD_DEPRECATED
+@@ -1263,9 +1257,6 @@ SISSetPortAttribute(ScrnInfoPtr pScrn, Atom attribute,
+      if(value > 4) value = 4;
+      pPriv->deinterlacemethod = value;
+ #endif
+-#ifdef SIS_CP
+-  SIS_CP_VIDEO_SETATTRIBUTE
+-#endif
+   } else if(attribute == pSiS->xvHue) {
+      if(pSiS->VGAEngine == SIS_315_VGA) {
+         if((value < -8) || (value > 7)) return BadValue;
+@@ -1361,9 +1352,6 @@ SISGetPortAttribute(ScrnInfoPtr pScrn, Atom attribute,
+   } else if(attribute == pSiS->xvdeintmeth) {
+      *value = pPriv->deinterlacemethod;
+ #endif
+-#ifdef SIS_CP
+-  SIS_CP_VIDEO_GETATTRIBUTE
+-#endif
+   } else if(attribute == pSiS->xvHue) {
+      if(pSiS->VGAEngine == SIS_315_VGA) {
+         *value = pPriv->hue;
+@@ -2301,9 +2289,6 @@ set_disablegfxlr(SISPtr pSiS, Bool mybool, SISOverlayPtr pOverlay)
+     if(mybool) pOverlay->keyOP = VI_ROP_Always;
+ }
+ 
+-#ifdef SIS_CP
+-    SIS_CP_VIDEO_SUBS
+-#endif
+ 
+ /*********************************
+  *   Set main overlay registers  *
+@@ -2602,10 +2587,6 @@ close_overlay(SISPtr pSiS, SISPortPrivPtr pPriv)
+      watchdog = WATCHDOG_DELAY;
+      while(vblank_active_CRT2(pSiS, pPriv) && --watchdog);
+ 
+-#ifdef SIS_CP
+-     SIS_CP_RESET_CP
+-#endif
+-
+   }
+ 
+   if(pPriv->displayMode & (DISPMODE_SINGLE1 | DISPMODE_MIRROR)) {
+@@ -3255,10 +3236,6 @@ MIRROR:
+    }
+    set_disablegfxlr(pSiS, pPriv->disablegfxlr, &overlay);
+ 
+-#ifdef SIS_CP
+-   SIS_CP_VIDEO_SET_CP
+-#endif
+-
+    /* set remaining overlay parameters */
+    set_overlay(pSiS, &overlay, pPriv, index, iscrt2);
+ 
+diff --git a/src/sis_video.h b/src/sis_video.h
+index 903a6c4..7cd63c3 100644
+--- a/src/sis_video.h
++++ b/src/sis_video.h
+@@ -369,9 +369,6 @@ static XF86AttributeRec SISAttributes_300[] =
+    {XvSettable | XvGettable, 100, 10000,       sisxvsdstorepbribc2},
+    {XvSettable | XvGettable, 0, 15,            sisxvsdpanelmode},
+ #endif
+-#ifdef SIS_CP
+-   SIS_CP_VIDEO_ATTRIBUTES
+-#endif
+    {0                      , 0, 0,             NULL}
+ };
+ 
+@@ -458,9 +455,6 @@ static XF86AttributeRec SISAttributes_315[] =
+    {XvSettable             , 0, -1,   	       sisxvsetreg},
+ #endif
+ #endif  /* XV_SD_DEPRECATED */
+-#ifdef SIS_CP
+-   SIS_CP_VIDEO_ATTRIBUTES
+-#endif
+    {XvSettable | XvGettable, 0, 1,             sisxvswitchcrt},
+    {0                      , 0, 0,             NULL}
+ };
+-- 
+1.7.4.1
+

@@ -1,0 +1,114 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis_video.c |   66 -------------------------------------------------------
+ 1 files changed, 0 insertions(+), 66 deletions(-)
+
+diff --git a/src/sis_video.c b/src/sis_video.c
+index 9859f33..17d8f71 100644
+--- a/src/sis_video.c
++++ b/src/sis_video.c
+@@ -4269,34 +4269,6 @@ SISPutImageBlit(
+ 			   DSTVIDEO;
+ 
+ 
+-#if 0 /* Not implemented by hardware! */
+-   if(pPriv->vsync) {
+-#ifdef SISMERGED
+-      if(!pSiS->MergedFB) {
+-#endif
+-#ifdef SISDUALHEAD
+-         if(pSiS->DualHeadMode) {
+-	    if(pSiS->SecondHead) {
+-	       MyPacket.P12_Command |= pPriv->VBlankTriggerCRT1;
+-	    } else {
+-	       MyPacket.P12_Command |= pPriv->VBlankTriggerCRT2;
+-	    }
+-	 } else {
+-#endif
+-            Bool IsSlaveMode = SiSBridgeIsInSlaveMode(pScrn);
+-            if((pSiS->VBFlags & DISPTYPE_DISP2) && !IsSlaveMode)
+-	       MyPacket.P12_Command |= pPriv->VBlankTriggerCRT2;
+-	    else if((pSiS->VBFlags & DISPTYPE_DISP1) || IsSlaveMode)
+-	       MyPacket.P12_Command |= pPriv->VBlankTriggerCRT1;
+-#ifdef SISDUALHEAD
+-         }
+-#endif
+-#ifdef SISMERGED
+-      }
+-#endif
+-   }
+-#endif
+-
+    first = TRUE;
+    while(nbox--) {
+       left = pbox->x1;
+@@ -4321,23 +4293,6 @@ SISPutImageBlit(
+       MyPacket.P12_RectWidth = right - left;
+       MyPacket.P12_RectHeight = bottom - top;
+ 
+-#if 0
+-#ifdef SISMERGED
+-      if((first) && (pSiS->MergedFB)) {
+-         int scrwidth = ((SiSMergedDisplayModePtr)pSiS->CurrentLayout.mode->Private)->CRT2->HDisplay;
+-	 int scrheight = ((SiSMergedDisplayModePtr)pSiS->CurrentLayout.mode->Private)->CRT2->VDisplay;
+-	 if( (right < pSiS->CRT2pScrn->frameX0) ||
+-	     (left >= pSiS->CRT2pScrn->frameX0 + scrwidth) ||
+-	     (bottom < pSiS->CRT2pScrn->frameY0) ||
+-	     (top >= pSiS->CRT2pScrn->frameY0 + scrheight) ) {
+-	    MyPacket.P12_Command |= pPriv->VBlankTriggerCRT1;
+-	 } else {
+-	    MyPacket.P12_Command |= pPriv->VBlankTriggerCRT2;
+-	 }
+-      }
+-#endif
+-#endif
+-
+       offsety = offsetuv = 0;
+       if(packed) {
+          if(pbox->y1 > drw_y + yoffset) {
+@@ -4346,19 +4301,9 @@ SISPutImageBlit(
+          if(pbox->x1 > drw_x + xoffset) {
+             offsetuv += ((pbox->x1 - drw_x - xoffset) << 1);
+ 	    if(offsetuv & 3) {
+-#if 0	       /* Paint over covering object - no */
+-	       if(MyPacket.P12_DstX > 0) {
+-	          offsetuv &= ~3;
+-	          MyPacket.P12_DstX--;
+-	          MyPacket.P12_RectWidth++;
+-	       } else {
+-#endif
+ 	          offsetuv = (offsetuv + 3) & ~3;
+ 	          MyPacket.P12_DstX++;
+ 	          MyPacket.P12_RectWidth--;
+-#if 0
+-	       }
+-#endif
+ 	    }
+          }
+       } else {
+@@ -4383,22 +4328,11 @@ SISPutImageBlit(
+       MyPacket.P12_YSrcAddr  = pPriv->bufAddr[index][pPriv->currentBuf[index]] + offsety + FBOFFSET;
+       MyPacket.P12_UVSrcAddr = pPriv->bufAddr[index][pPriv->currentBuf[index]] + bytesize + offsetuv + FBOFFSET;
+       SISWriteBlitPacket(pSiS, (CARD32*)&MyPacket);
+-#if 0
+-      MyPacket.P12_Command &= ~(pPriv->VBlankTriggerCRT1 | pPriv->VBlankTriggerCRT2);
+-#endif
+       first = FALSE;
+ mycont:
+       pbox++;
+    }
+ 
+-#if 0
+-   {
+-   int debug = 0;
+-   while( (SIS_MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000) { debug++; };
+-   while( (SIS_MMIO_IN16(pSiS->IOBase, Q_STATUS+2) & 0x8000) != 0x8000) { debug++; };
+-   xf86DrvMsg(0, X_INFO, "vsync %d, debug %d\n", pPriv->vsync, debug);
+-   }
+-#endif
+ 
+    pPriv->currentBuf[index] ^= 1;
+ 
+-- 
+1.7.4.1
+

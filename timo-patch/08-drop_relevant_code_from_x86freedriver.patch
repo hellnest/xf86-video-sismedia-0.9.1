@@ -1,0 +1,758 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis.h           |   11 --------
+ src/sis310_accel.c  |   42 -------------------------------
+ src/sis6326_video.c |   54 ----------------------------------------
+ src/sis_cursor.c    |    6 ----
+ src/sis_dri.c       |   14 ----------
+ src/sis_driver.c    |   35 --------------------------
+ src/sis_opt.c       |   21 ---------------
+ src/sis_vga.c       |    5 ---
+ src/sis_video.c     |   68 ---------------------------------------------------
+ src/vgatypes.h      |    5 ---
+ 10 files changed, 0 insertions(+), 261 deletions(-)
+
+diff --git a/src/sis.h b/src/sis.h
+index 7cf81af..3314471 100644
+--- a/src/sis.h
++++ b/src/sis.h
+@@ -87,11 +87,6 @@
+ #ifdef XORG_VERSION_CURRENT
+ #include "xorgVersion.h"
+ #define SISMYSERVERNAME "X.org"
+-#ifndef XF86_VERSION_NUMERIC
+-#define XF86_VERSION_NUMERIC(major,minor,patch,snap,dummy) \
+-	(((major) * 10000000) + ((minor) * 100000) + ((patch) * 1000) + snap)
+-#define XF86_VERSION_CURRENT XF86_VERSION_NUMERIC(4,3,99,902,0)
+-#endif
+ #if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(6,8,99,900,0) || XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(4,0,0,0,0)
+ #define SISISXORG6899900
+ #endif
+@@ -120,10 +115,8 @@
+ #define SIS_CURRENT_VERSION     ((SIS_MAJOR_VERSION << 16) | \
+                                  (SIS_MINOR_VERSION << 8) | SIS_PATCH sisLEVEL )
+ 
+-#if (XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,99,0,0)) || (defined(XvExtension))
+ #include "xf86xv.h"
+ #include <X11/extensions/Xv.h>
+-#endif
+ 
+ /* Platform/architecture related definitions: */
+ 
+@@ -169,12 +162,8 @@
+ #undef SISHAVEDRMWRITE
+ #undef SISNEWDRI
+ #ifdef XF86DRI
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,3,0)
+ #define SISHAVEDRMWRITE
+-#endif
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,99,14,0)
+ #define SISNEWDRI
+-#endif
+ #undef SIS315DRI		/* define this if dri is adapted for 315/330 series */
+ #include "xf86drm.h"
+ #include "sarea.h"
+diff --git a/src/sis310_accel.c b/src/sis310_accel.c
+index 8bba823..befb095 100644
+--- a/src/sis310_accel.c
++++ b/src/sis310_accel.c
+@@ -144,11 +144,7 @@ extern unsigned char SiSGetPatternROP(int rop);
+ CARD32 dummybuf;
+ 
+ #ifdef SIS_NEED_ARRAY
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ #define SiSRenderOpsMAX 0x2b
+-#else
+-#define SiSRenderOpsMAX 0x0f
+-#endif
+ static const CARD8 SiSRenderOps[] = {	/* PictOpXXX 1 = supported, 0 = unsupported */
+      1, 1, 1, 1,
+      0, 0, 0, 0,
+@@ -319,32 +315,6 @@ SiSSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
+ 	mymin = min(src_y, dst_y);
+ 	mymax = max(src_y, dst_y);
+ 
+-	/* Libxaa.a has a bug: The tilecache cannot operate
+-	 * correctly if there are 512x512 slots, but no 256x256
+-	 * slots. This leads to catastrophic data fed to us.
+-	 * Filter this out here and warn the user.
+-	 * Fixed in 4.3.99.10 (?) and Debian's 4.3.0.1
+-	 */
+-#if (XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,10,0)) && (XF86_VERSION_CURRENT != XF86_VERSION_NUMERIC(4,3,0,1,0))
+-	if((src_x < 0)  ||
+-	   (dst_x < 0)  ||
+-	   (src_y < 0)  ||
+-	   (dst_y < 0)  ||
+-	   (width <= 0) ||
+-	   (height <= 0)) {
+-	   xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+-		"BitBlit fatal error: Illegal coordinates:\n");
+-	   xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+-	        "Source x %d y %d, dest x %d y %d, width %d height %d\n",
+-			  src_x, src_y, dst_x, dst_y, width, height);
+-	   xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+-		"This is very probably caused by a known bug in libxaa.a.\n");
+-	   xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+-		"Please update libxaa.a to avoid this error.\n");
+-	   return;
+-	}
+-#endif
+-
+ 	/* Although the chip knows the direction to use
+ 	 * if the source and destination areas overlap,
+ 	 * that logic fails if we fiddle with the bitmap
+@@ -1435,29 +1405,23 @@ SiSSetupForCPUToScreenAlphaTexture(ScrnInfoPtr pScrn,
+ 	SiSSetupDSTColorDepth(pSiS->SiS310_AccelDepth);
+ 	switch(op) {
+ 	case PictOpClear:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointClear:
+ 	case PictOpConjointClear:
+-#endif
+ 	   SiSSetupPATFGDSTRect(0, pSiS->scrnOffset, DEV_HEIGHT)
+ 	   /* SiSSetupROP(0x00) - is already 0 */
+ 	   SiSSetupCMDFlag(PATFG)
+ 	   docopy = FALSE;
+ 	   break;
+ 	case PictOpSrc:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointSrc:
+ 	case PictOpConjointSrc:
+-#endif
+ 	   SiSSetupSRCPitchDSTRect((pitch << 2), pSiS->scrnOffset, DEV_HEIGHT);
+ 	   SiSSetupAlpha(0xff)
+ 	   SiSSetupCMDFlag(ALPHA_BLEND | SRCVIDEO | A_NODESTALPHA)
+ 	   break;
+ 	case PictOpDst:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointDst:
+ 	case PictOpConjointDst:
+-#endif
+ 	   SiSSetupSRCPitchDSTRect((pitch << 2), pSiS->scrnOffset, DEV_HEIGHT);
+ 	   SiSSetupAlpha(0x00)
+ 	   SiSSetupCMDFlag(ALPHA_BLEND | SRCVIDEO | A_CONSTANTALPHA)
+@@ -1574,29 +1538,23 @@ SiSSetupForCPUToScreenTexture(ScrnInfoPtr pScrn,
+ 	SiSSetupDSTColorDepth(pSiS->SiS310_AccelDepth);
+ 	switch(op) {
+ 	case PictOpClear:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointClear:
+ 	case PictOpConjointClear:
+-#endif
+ 	   SiSSetupPATFGDSTRect(0, pSiS->scrnOffset, DEV_HEIGHT)
+ 	   /* SiSSetupROP(0x00) - is already zero */
+ 	   SiSSetupCMDFlag(PATFG)
+ 	   docopy = FALSE;
+ 	   break;
+ 	case PictOpSrc:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointSrc:
+ 	case PictOpConjointSrc:
+-#endif
+ 	   SiSSetupSRCPitchDSTRect(pitch, pSiS->scrnOffset, DEV_HEIGHT);
+ 	   SiSSetupAlpha(0xff)
+ 	   SiSSetupCMDFlag(ALPHA_BLEND | SRCVIDEO | A_NODESTALPHA)
+ 	   break;
+ 	case PictOpDst:
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,0,0,0)
+ 	case PictOpDisjointDst:
+ 	case PictOpConjointDst:
+-#endif
+ 	   SiSSetupSRCPitchDSTRect(pitch, pSiS->scrnOffset, DEV_HEIGHT);
+ 	   SiSSetupAlpha(0x00)
+ 	   SiSSetupCMDFlag(ALPHA_BLEND | SRCVIDEO | A_CONSTANTALPHA)
+diff --git a/src/sis6326_video.c b/src/sis6326_video.c
+index 66352b7..be30178 100644
+--- a/src/sis6326_video.c
++++ b/src/sis6326_video.c
+@@ -524,13 +524,6 @@ SIS6326SetupImageVideo(ScreenPtr pScreen)
+     XF86VideoAdaptorPtr adapt;
+     SISPortPrivPtr pPriv;
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-    XAAInfoRecPtr pXAA = pSiS->AccelInfoPtr;
+-
+-    if(!pXAA || !pXAA->FillSolidRects)
+-       return NULL;
+-#endif
+-
+     if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
+                             sizeof(SISPortPrivRec) +
+                             sizeof(DevUnion))))
+@@ -602,37 +595,6 @@ SIS6326SetupImageVideo(ScreenPtr pScreen)
+     return adapt;
+ }
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,3,0)
+-static Bool
+-RegionsEqual(RegionPtr A, RegionPtr B)
+-{
+-    int *dataA, *dataB;
+-    int num;
+-
+-    num = REGION_NUM_RECTS(A);
+-    if(num != REGION_NUM_RECTS(B))
+-    return FALSE;
+-
+-    if((A->extents.x1 != B->extents.x1) ||
+-       (A->extents.x2 != B->extents.x2) ||
+-       (A->extents.y1 != B->extents.y1) ||
+-       (A->extents.y2 != B->extents.y2))
+-    return FALSE;
+-
+-    dataA = (int*)REGION_RECTS(A);
+-    dataB = (int*)REGION_RECTS(B);
+-
+-    while(num--) {
+-      if((dataA[0] != dataB[0]) || (dataA[1] != dataB[1]))
+-        return FALSE;
+-      dataA += 2;
+-      dataB += 2;
+-    }
+-
+-    return TRUE;
+-}
+-#endif
+-
+ static int
+ SIS6326SetPortAttribute(ScrnInfoPtr pScrn, Atom attribute,
+ 		    INT32 value, pointer data)
+@@ -1325,22 +1287,12 @@ SIS6326PutImage(
+    /* update cliplist */
+    if(  pPriv->autopaintColorKey &&
+         (pPriv->grabbedByV4L ||
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,3,0)
+-	 !RegionsEqual(&pPriv->clip, clipBoxes)) ) {
+-#else
+          !REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) ) {
+-#endif
+       /* We always paint colorkey for V4L */
+       if(!pPriv->grabbedByV4L)
+      	 REGION_COPY(pScrn->pScreen, &pPriv->clip, clipBoxes);
+       /* draw these */
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-      (*pSiS->AccelInfoPtr->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+-                    REGION_NUM_RECTS(clipBoxes),
+-                    REGION_RECTS(clipBoxes));
+-#else
+       xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
+-#endif
+    }
+ 
+    pPriv->currentBuf ^= 1;
+@@ -1588,13 +1540,7 @@ SIS6326DisplaySurface (
+    SIS6326DisplayVideo(pScrn, pPriv);
+ 
+    if(pPriv->autopaintColorKey) {
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-      (*XAAPTR(pScrn)->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+-                    REGION_NUM_RECTS(clipBoxes),
+-                    REGION_RECTS(clipBoxes));
+-#else
+       xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
+-#endif
+    }
+ 
+    pPriv->videoStatus = CLIENT_VIDEO_ON;
+diff --git a/src/sis_cursor.c b/src/sis_cursor.c
+index 67a3402..8b77d6b 100644
+--- a/src/sis_cursor.c
++++ b/src/sis_cursor.c
+@@ -994,7 +994,6 @@ SiS300UseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
+     return TRUE;
+ }
+ 
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+ #ifdef ARGB_CURSOR
+ #ifdef SIS_ARGB_CURSOR
+ static Bool
+@@ -1347,7 +1346,6 @@ static void SiS310LoadCursorImageARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
+ }
+ #endif
+ #endif
+-#endif
+ 
+ Bool
+ SiSHWCursorInit(ScreenPtr pScreen)
+@@ -1374,7 +1372,6 @@ SiSHWCursorInit(ScreenPtr pScreen)
+         infoPtr->SetCursorColors = SiS300SetCursorColors;
+         infoPtr->LoadCursorImage = SiS300LoadCursorImage;
+         infoPtr->UseHWCursor = SiS300UseHWCursor;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+ #ifdef ARGB_CURSOR
+ #ifdef SIS_ARGB_CURSOR
+         if(pSiS->OptUseColorCursor) {
+@@ -1383,7 +1380,6 @@ SiSHWCursorInit(ScreenPtr pScreen)
+ 	}
+ #endif
+ #endif
+-#endif
+         infoPtr->Flags =
+             HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
+             HARDWARE_CURSOR_INVERT_MASK |
+@@ -1411,7 +1407,6 @@ SiSHWCursorInit(ScreenPtr pScreen)
+         infoPtr->SetCursorColors = SiS310SetCursorColors;
+         infoPtr->LoadCursorImage = SiS310LoadCursorImage;
+         infoPtr->UseHWCursor = SiS300UseHWCursor;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+ #ifdef ARGB_CURSOR
+ #ifdef SIS_ARGB_CURSOR
+   	if(pSiS->OptUseColorCursor) {
+@@ -1420,7 +1415,6 @@ SiSHWCursorInit(ScreenPtr pScreen)
+ 	}
+ #endif
+ #endif
+-#endif
+         infoPtr->Flags =
+             HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
+             HARDWARE_CURSOR_INVERT_MASK |
+diff --git a/src/sis_dri.c b/src/sis_dri.c
+index 97ed951..01598a6 100644
+--- a/src/sis_dri.c
++++ b/src/sis_dri.c
+@@ -47,11 +47,7 @@
+ #include "GL/glxtokens.h"
+ 
+ #ifndef SISHAVEDRMWRITE
+-# if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-extern Bool drmSiSAgpInit(int driSubFD, int offset, int size);
+-# else
+ #  include "xf86drmCompat.h"
+-# endif
+ #endif
+ 
+ #ifdef XORG_VERSION_CURRENT
+@@ -61,15 +57,9 @@ extern Bool drmSiSAgpInit(int driSubFD, int offset, int size);
+ extern char *DRICreatePCIBusID(pciVideoPtr PciInfo);
+ #endif
+ #endif
+-#else
+-# if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,4,99,9,0)
+-# undef SISHAVECREATEBUSID
+-# endif
+ #endif
+ 
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+ #include "sis_common.h"
+-#endif
+ 
+ #ifndef DRIINFO_MAJOR_VERSION
+ #define DRIINFO_MAJOR_VERSION 4
+@@ -267,9 +257,7 @@ SISDRIScreenInit(ScreenPtr pScreen)
+   SISPtr pSIS = SISPTR(pScrn);
+   DRIInfoPtr pDRIInfo;
+   SISDRIPtr pSISDRI;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+   drmVersionPtr version;
+-#endif
+ 
+    pSIS->cmdQueueLenPtrBackup = NULL;
+ #ifdef SIS315DRI
+@@ -409,7 +397,6 @@ SISDRIScreenInit(ScreenPtr pScreen)
+      return FALSE;
+   }
+ 
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+   /* Check DRM kernel version */
+   version = drmGetVersion(pSIS->drmSubFD);
+   if(version) {
+@@ -440,7 +427,6 @@ SISDRIScreenInit(ScreenPtr pScreen)
+      }
+      drmFreeVersion(version);
+   }
+-#endif
+ 
+   /* MMIO */
+   pSISDRI->regs.size = SISIOMAPSIZE;
+diff --git a/src/sis_driver.c b/src/sis_driver.c
+index 863ad24..d2d4997 100644
+--- a/src/sis_driver.c
++++ b/src/sis_driver.c
+@@ -209,8 +209,6 @@ static XF86ModuleVersionInfo sisVersRec =
+     MODINFOSTRING2,
+ #ifdef XORG_VERSION_CURRENT
+     XORG_VERSION_CURRENT,
+-#else
+-    XF86_VERSION_CURRENT,
+ #endif
+     SIS_MAJOR_VERSION, SIS_MINOR_VERSION, SIS_PATCH sisLEVEL,
+     ABI_CLASS_VIDEODRV,         /* This is a video driver */
+@@ -1202,13 +1200,11 @@ SiSCopyModeNLink(ScrnInfoPtr pScrn, DisplayModePtr dest,
+     mode->VTotal += dy;
+ 
+     mode->type = M_T_DEFAULT;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,2,0)
+     /* Set up as user defined (ie fake that the mode has been named in the
+      * Modes-list in the screen section; corrects cycling with CTRL-ALT-[-+]
+      * when source mode has not been listed there.)
+      */
+     mode->type |= M_T_USERDEF;
+-#endif
+ 
+     /* Set the VRefresh field (in order to make RandR use it for the rates). We
+      * simply set this to the refresh rate for the CRT1 mode (since CRT2 will
+@@ -2821,12 +2817,8 @@ SiS_LoadInitVBE(ScrnInfoPtr pScrn)
+     if(pSiS->pVbe) return;
+ 
+     if(xf86LoadSubModule(pScrn, "vbe")) {
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-       pSiS->pVbe = VBEInit(pSiS->pInt, pSiS->pEnt->index);
+-#else
+        pSiS->pVbe = VBEExtendedInit(pSiS->pInt, pSiS->pEnt->index,
+ 	                SET_BIOS_SCRATCH | RESTORE_BIOS_SCRATCH);
+-#endif
+     }
+ 
+     if(!pSiS->pVbe) {
+@@ -3132,11 +3124,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+ 
+        if(xf86LoadSubModule(pScrn, "vbe")) {
+           int index = xf86GetEntityInfo(pScrn->entityList[0])->index;
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-	  if((pVbe = VBEInit(NULL, index)))
+-#else
+           if((pVbe = VBEExtendedInit(NULL, index, 0)))
+-#endif
+           {
+              ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+              vbeFree(pVbe);
+@@ -3196,13 +3184,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+          "This driver binary is not compiled for this version of " SISMYSERVERNAME "\n");
+     }
+ #endif
+-#else
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+-    if(xf86GetVersion() != XF86_VERSION_CURRENT) {
+-       xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+-         "This driver binary is not compiled for this version of " SISMYSERVERNAME "\n");
+-    }
+-#endif
+ #endif
+ 
+     /* Allocate the SISRec driverPrivate */
+@@ -3216,11 +3197,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+     pSiS->pInt = NULL;
+ 
+     /* Save PCI Domain Base */
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-    pSiS->IODBase = 0;
+-#else
+     pSiS->IODBase = pScrn->domainIOBase;
+-#endif
+ 
+     /* Get the entity, and make sure it is PCI. */
+     pSiS->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
+@@ -4126,11 +4103,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
+ 	        ULong  segstart;
+ 		for(segstart = BIOS_BASE; segstart < 0x000f0000; segstart += 0x00001000) {
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-		   if(xf86ReadBIOS(segstart, 0, pSiS->BIOS, biossize) != biossize) continue;
+-#else
+ 		   if(xf86ReadDomainMemory(pSiS->PciTag, segstart, biossize, pSiS->BIOS) != biossize) continue;
+-#endif
+ 
+ 		   if(!SISCheckBIOS(pSiS, mypciid, mypcivendor, biossize)) continue;
+ 
+@@ -8910,11 +8883,9 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+ 	     case 24: refreshArea = SISRefreshArea24; break;
+ 	     case 32: refreshArea = SISRefreshArea32; break;
+ 	  }
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+ 	  xf86DisableRandR();
+ 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+ 		"Driver rotation enabled, disabling RandR\n");
+-#endif
+        } else if(pSiS->Reflect) {
+           switch(pScrn->bitsPerPixel) {
+ 	  case 8:
+@@ -8923,11 +8894,9 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+              if(!pSiS->PointerMoved) pSiS->PointerMoved = pScrn->PointerMoved;
+ 	     pScrn->PointerMoved = SISPointerMovedReflect;
+ 	     refreshArea = SISRefreshAreaReflect;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+ 	     xf86DisableRandR();
+ 	     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+ 		  "Driver reflection enabled, disabling RandR\n");
+-#endif
+ 	     break;
+ 	  default:
+ 	     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+@@ -8946,7 +8915,6 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+ 
+     /* Initialize Xv */
+     pSiS->ResetXv = pSiS->ResetXvGamma = pSiS->ResetXvDisplay = NULL;
+-#if (XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,99,0,0)) || (defined(XvExtension))
+     if((!pSiS->NoXvideo) && (!(pSiS->SiS_SD2_Flags & SiS_SD2_NOOVERLAY))) {
+ 
+        if((pSiS->VGAEngine == SIS_300_VGA) ||
+@@ -9007,7 +8975,6 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+ 
+        }
+     }
+-#endif
+ 
+ #ifdef XF86DRI
+     if(pSiS->loadDRI) {
+@@ -9034,13 +9001,11 @@ SISScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
+        pSiS->Rotate = 0;
+        pSiS->Reflect = 0;
+        pSiS->ShadowFB = FALSE;
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+        if(pSiS->CRT1XOffs || pSiS->CRT1YOffs || pSiS->CRT2XOffs || pSiS->CRT2YOffs) {
+ 	  xf86DisableRandR();
+ 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+ 		"MergedFB: CRT2Position offset used, disabling RandR\n");
+        }
+-#endif
+ #ifdef SISXINERAMA
+        if(pSiS->UseSiSXinerama) {
+ 	  SiSnoPanoramiXExtension = FALSE;
+diff --git a/src/sis_opt.c b/src/sis_opt.c
+index 933049e..d6e9422 100644
+--- a/src/sis_opt.c
++++ b/src/sis_opt.c
+@@ -628,9 +628,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+        pSiS->loadDRI = TRUE;
+     }
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-    pSiS->OptUseColorCursor = 0;
+-#else
+     if(pSiS->VGAEngine == SIS_300_VGA) {
+        pSiS->OptUseColorCursor = 0;
+        pSiS->OptUseColorCursorBlend = 1;
+@@ -643,7 +640,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+           pSiS->OptUseColorCursor = 1;
+        }
+     }
+-#endif
+ 
+     if(pSiS->VGAEngine == SIS_300_VGA) {
+        pSiS->AllowHotkey = 0;
+@@ -705,12 +701,7 @@ SiSOptions(ScrnInfoPtr pScrn)
+      */
+     if(!xf86ReturnOptValBool(pSiS->Options, OPTION_ACCEL, TRUE)) {
+        pSiS->NoAccel = TRUE;
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-       pSiS->NoXvideo = TRUE;
+-       xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "2D Acceleration and Xv disabled\n");
+-#else
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "2D Acceleration disabled\n");
+-#endif
+     }
+ 
+ #if defined(SIS_USE_XAA) && defined(SIS_USE_EXA)
+@@ -773,7 +764,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+      * select emultation transparency threshold for 300 series
+      *
+      */
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,2,99,0,0)
+ #ifdef ARGB_CURSOR
+ #ifdef SIS_ARGB_CURSOR
+     if((pSiS->HWCursor) &&
+@@ -819,7 +809,6 @@ SiSOptions(ScrnInfoPtr pScrn)
+     }
+ #endif
+ #endif
+-#endif
+ 
+     /* OverruleFrequencyRanges
+      * Enable/disable overruling bogus frequency ranges for TV and LCD(A)
+@@ -1939,14 +1928,8 @@ SiSOptions(ScrnInfoPtr pScrn)
+     }
+     if(pSiS->ShadowFB) {
+ 	pSiS->NoAccel = TRUE;
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-	pSiS->NoXvideo = TRUE;
+-	xf86DrvMsg(pScrn->scrnIndex, from,
+-	   "Using \"Shadow Framebuffer\" - 2D acceleration and Xv disabled\n");
+-#else
+ 	xf86DrvMsg(pScrn->scrnIndex, from,
+ 	   "Using \"Shadow Framebuffer\" - 2D acceleration disabled\n");
+-#endif
+     }
+ 
+     /* Rotate */
+@@ -2040,11 +2023,7 @@ SiSOptions(ScrnInfoPtr pScrn)
+     /* XVideo
+      * Set enables/disables Xv hardware video acceleration
+      */
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
+-    if((!pSiS->NoAccel) && (!pSiS->NoXvideo)) {
+-#else
+     if(!pSiS->NoXvideo) {
+-#endif
+        if(!xf86ReturnOptValBool(pSiS->Options, OPTION_XVIDEO, TRUE)) {
+ 	  pSiS->NoXvideo = TRUE;
+ 	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "XVideo extension (Xv) disabled\n");
+diff --git a/src/sis_vga.c b/src/sis_vga.c
+index 5e6d0b4..304be1a 100644
+--- a/src/sis_vga.c
++++ b/src/sis_vga.c
+@@ -1714,7 +1714,6 @@ SiSVGAMapMem(ScrnInfoPtr pScrn)
+     if(pSiS->VGAMapSize == 0) pSiS->VGAMapSize = (64 * 1024);
+     if(pSiS->VGAMapPhys == 0) pSiS->VGAMapPhys = 0xA0000;
+ 
+-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
+ #if XSERVER_LIBPCIACCESS
+     pSiS->VGAMemBase = xf86MapDomainMemory(pScrn->scrnIndex, VIDMEM_MMIO_32BIT,
+ 			pSiS->PciInfo, pSiS->VGAMapPhys, pSiS->VGAMapSize);
+@@ -1722,10 +1721,6 @@ SiSVGAMapMem(ScrnInfoPtr pScrn)
+     pSiS->VGAMemBase = xf86MapDomainMemory(pScrn->scrnIndex, VIDMEM_MMIO_32BIT,
+ 			pSiS->PciTag, pSiS->VGAMapPhys, pSiS->VGAMapSize);
+ #endif
+-#else
+-    pSiS->VGAMemBase = xf86MapVidMem(pScrn->scrnIndex, VIDMEM_MMIO_32BIT,
+-			pSiS->VGAMapPhys, pSiS->VGAMapSize);
+-#endif
+ 
+     return(pSiS->VGAMemBase != NULL);
+ }
+diff --git a/src/sis_video.c b/src/sis_video.c
+index 460ad0c..9859f33 100644
+--- a/src/sis_video.c
++++ b/src/sis_video.c
+@@ -866,14 +866,6 @@ SISSetupImageVideo(ScreenPtr pScreen)
+     XF86VideoAdaptorPtr adapt;
+     SISPortPrivPtr pPriv;
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-    XAAInfoRecPtr pXAA = pSiS->AccelInfoPtr;
+-
+-    if(!pXAA || !pXAA->FillSolidRects) {
+-       return NULL;
+-    }
+-#endif
+-
+     if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
+                             sizeof(SISPortPrivRec) +
+                             sizeof(DevUnion)))) {
+@@ -1129,37 +1121,6 @@ SISSetupImageVideo(ScreenPtr pScreen)
+     return adapt;
+ }
+ 
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,3,0)
+-static Bool
+-RegionsEqual(RegionPtr A, RegionPtr B)
+-{
+-    int *dataA, *dataB;
+-    int num;
+-
+-    num = REGION_NUM_RECTS(A);
+-    if(num != REGION_NUM_RECTS(B))
+-       return FALSE;
+-
+-    if((A->extents.x1 != B->extents.x1) ||
+-       (A->extents.x2 != B->extents.x2) ||
+-       (A->extents.y1 != B->extents.y1) ||
+-       (A->extents.y2 != B->extents.y2))
+-       return FALSE;
+-
+-    dataA = (int*)REGION_RECTS(A);
+-    dataB = (int*)REGION_RECTS(B);
+-
+-    while(num--) {
+-      if((dataA[0] != dataB[0]) || (dataA[1] != dataB[1]))
+-         return FALSE;
+-      dataA += 2;
+-      dataB += 2;
+-    }
+-
+-    return TRUE;
+-}
+-#endif
+-
+ /*********************************
+  *       SetPortAttribute()      *
+  *********************************/
+@@ -3626,11 +3587,7 @@ SISPutImage(
+    /* update cliplist */
+    if(pPriv->autopaintColorKey &&
+       (pPriv->grabbedByV4L ||
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,3,0)
+-       (!RegionsEqual(&pPriv->clip, clipBoxes)) ||
+-#else
+        (!REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) ||
+-#endif
+        (pPriv->PrevOverlay != pPriv->NoOverlay))) {
+      /* We always paint the colorkey for V4L */
+      if(!pPriv->grabbedByV4L) {
+@@ -3648,13 +3605,7 @@ SISPutImage(
+      } else {
+ #endif
+         if(!pSiS->disablecolorkeycurrent) {
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-           (*pXAA->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+-                           REGION_NUM_RECTS(clipBoxes),
+-                           REGION_RECTS(clipBoxes));
+-#else
+ 	   xf86XVFillKeyHelper(pScrn->pScreen, (pPriv->NoOverlay) ? 0x00ff0000 : pPriv->colorKey, clipBoxes);
+-#endif
+ 	}
+ #ifdef SIS_USE_XAA
+      }
+@@ -3895,13 +3846,7 @@ SISDisplaySurface (
+ 
+       } else {
+ #endif
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-   	 (*pXAA->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+-                        REGION_NUM_RECTS(clipBoxes),
+-                        REGION_RECTS(clipBoxes));
+-#else
+          xf86XVFillKeyHelper(pScrn->pScreen, (pPriv->NoOverlay) ? 0x00ff0000 : pPriv->colorKey, clipBoxes);
+-#endif
+ #ifdef SIS_USE_XAA
+       }
+ #endif
+@@ -4177,9 +4122,6 @@ SISPutImageBlit(
+ ){
+    SISPtr pSiS = SISPTR(pScrn);
+    SISBPortPrivPtr pPriv = (SISBPortPrivPtr)(pSiS->blitPriv);
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-   XAAInfoRecPtr pXAA = pSiS->AccelInfoPtr;
+-#endif
+    BoxPtr pbox = REGION_RECTS(clipBoxes);
+    int    nbox = REGION_NUM_RECTS(clipBoxes);
+    CARD32 dstbase = 0, offsety, offsetuv, temp;
+@@ -4230,18 +4172,8 @@ SISPutImageBlit(
+    }
+ 
+    if(xoffset || yoffset) {
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,3,0)
+-      if(!RegionsEqual(&pPriv->blitClip[index], clipBoxes)) {
+-#else
+       if(!REGION_EQUAL(pScrn->pScreen, &pPriv->blitClip[index], clipBoxes)) {
+-#endif
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,1,99,1,0)
+-         (*pXAA->FillSolidRects)(pScrn, 0x00000000, GXcopy, ~0,
+-                              REGION_NUM_RECTS(clipBoxes),
+-                              REGION_RECTS(clipBoxes));
+-#else
+          xf86XVFillKeyHelper(pScrn->pScreen, 0x00000000, clipBoxes);
+-#endif
+          REGION_COPY(pScrn->pScreen, &pPriv->blitClip[index], clipBoxes);
+       }
+    }
+diff --git a/src/vgatypes.h b/src/vgatypes.h
+index 4be31e4..5163eb2 100644
+--- a/src/vgatypes.h
++++ b/src/vgatypes.h
+@@ -79,13 +79,8 @@ typedef unsigned long SISIOADDRESS;
+ #endif
+ 
+ #ifdef SIS_XORG_XF86
+-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,0,0,0)
+-typedef unsigned long IOADDRESS;
+-typedef unsigned long SISIOADDRESS;
+-#else
+ typedef IOADDRESS SISIOADDRESS;
+ #endif
+-#endif
+ 
+ typedef enum _SIS_CHIP_TYPE {
+     SIS_VGALegacy = 0,
+-- 
+1.7.4.1
+

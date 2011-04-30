@@ -1,0 +1,22 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis_driver.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/src/sis_driver.c b/src/sis_driver.c
+index 337bba6..61fd515 100644
+--- a/src/sis_driver.c
++++ b/src/sis_driver.c
+@@ -7103,7 +7103,9 @@ static Bool
+ SISMapMem(ScrnInfoPtr pScrn)
+ {
+     SISPtr pSiS = SISPTR(pScrn);
++#ifndef XSERVER_LIBPCIACCESS
+     int mmioFlags = VIDMEM_MMIO;
++#endif
+ #ifdef SISDUALHEAD
+     SISEntPtr pSiSEnt = pSiS->entityPrivate;
+ #endif
+-- 
+1.7.4.1
+

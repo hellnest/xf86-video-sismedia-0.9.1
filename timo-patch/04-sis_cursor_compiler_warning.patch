@@ -1,0 +1,37 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis_cursor.c  |    2 +-
+ src/sis_utility.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+Fix the logic, as pointed out by Mark Kettenis.
+
+diff --git a/src/sis_cursor.c b/src/sis_cursor.c
+index 13eddc4..67a3402 100644
+--- a/src/sis_cursor.c
++++ b/src/sis_cursor.c
+@@ -759,7 +759,7 @@ SiS300LoadCursorImage(ScrnInfoPtr pScrn, UChar *src)
+     }
+ 
+     if(pSiS->VBFlags & CRT2_ENABLE) {
+-       if((pSiS->UseHWARGBCursor) && (!pSiS->VBFlags & DISPTYPE_CRT1)) {
++       if((pSiS->UseHWARGBCursor) && (!(pSiS->VBFlags & DISPTYPE_CRT1))) {
+ 	  status2 = sis301GetCursorStatus;
+ 	  sis301DisableHWCursor()
+ 	  SISWaitRetraceCRT2(pScrn);
+diff --git a/src/sis_utility.c b/src/sis_utility.c
+index 64d8919..0892cf5 100644
+--- a/src/sis_utility.c
++++ b/src/sis_utility.c
+@@ -523,7 +523,7 @@ SISSwitchCRT2Type(ScrnInfoPtr pScrn, ULong newvbflags, Bool quiet)
+     }
+ #endif
+ 
+-    if((!(newvbflags & CRT2_ENABLE)) && (!newvbflags & DISPTYPE_CRT1)) {
++    if((!(newvbflags & CRT2_ENABLE)) && (!(newvbflags & DISPTYPE_CRT1))) {
+        if(!quiet) {
+           xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+              "CRT2 can't be switched off while CRT1 is off\n");
+-- 
+1.7.4.1
+

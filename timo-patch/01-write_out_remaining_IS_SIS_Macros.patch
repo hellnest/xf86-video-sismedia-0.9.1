@@ -1,0 +1,349 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/init.c    |   35 +++++++++++++++++++++++++----------
+ src/init301.c |   48 ++++++++++++++++++++++++------------------------
+ src/initdef.h |   19 +------------------
+ 3 files changed, 50 insertions(+), 52 deletions(-)
+
+diff --git a/src/init.c b/src/init.c
+index 74df1f5..9dfb6cf 100644
+--- a/src/init.c
++++ b/src/init.c
+@@ -1276,7 +1276,7 @@ SiSDetermineROMLayout661(struct SiS_Private *SiS_Pr)
+       if((romvmaj != 0) || (romvmin >= 92)) {
+ 	 return TRUE;
+       }
+-   } else if(IS_SIS650740) {
++   } else if((SiS_Pr->ChipType >= SIS_650) && (SiS_Pr->ChipType <= SIS_740)) {
+       if((ROMAddr[0x1a] == 'N') &&
+ 	 (ROMAddr[0x1b] == 'e') &&
+ 	 (ROMAddr[0x1c] == 'w') &&
+@@ -1404,7 +1404,7 @@ SiS_ResetSegmentRegOver(struct SiS_Private *SiS_Pr)
+ static void
+ SiS_ResetSegmentRegisters(struct SiS_Private *SiS_Pr)
+ {
+-   if((IS_SIS65x) || (SiS_Pr->ChipType >= SIS_661)) {
++   if((SiS_Pr->SiS_SysFlags & SF_Is65x) || (SiS_Pr->ChipType >= SIS_661)) {
+       SiS_ResetSegmentReg(SiS_Pr);
+       SiS_ResetSegmentRegOver(SiS_Pr);
+    }
+@@ -1522,7 +1522,9 @@ SiS_Get310DRAMType(struct SiS_Private *SiS_Pr)
+ 	 } else {
+ 	    data = SiS_GetReg(SiS_Pr->SiS_P3d4,0x78) & 0x07;
+ 	 }
+-      } else if(IS_SIS550650740) {
++      } else if((SiS_Pr->ChipType == SIS_550) ||
++		(SiS_Pr->ChipType == SIS_650) ||
++		(SiS_Pr->ChipType == SIS_740)) {
+ 	 data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x13) & 0x07;
+       } else {	/* 315, 330 */
+ 	 data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x3a) & 0x03;
+@@ -1732,17 +1734,25 @@ SiS_SetLowModeTest(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ static void
+ SiS_OpenCRTC(struct SiS_Private *SiS_Pr)
+ {
+-   if(IS_SIS650) {
++   switch(SiS_Pr->ChipType) {
++   case SIS_650:
+       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x51,0x1f);
+-      if(IS_SIS651) SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x20);
++      if(SiS_Pr->SiS_SysFlags & (SF_Is651 | SF_Is652)) {
++	SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x20);
++      }
+       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x56,0xe7);
+-   } else if(IS_SIS661741660760) {
++      break;
++   case SIS_661:
++   case SIS_741:
++   case SIS_660:
++   case SIS_760:
+       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x61,0xf7);
+       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x51,0x1f);
+       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x56,0xe7);
+       if(!SiS_Pr->SiS_ROMNew) {
+ 	 SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x3a,0xef);
+       }
++      break;
+    }
+ }
+ 
+@@ -1752,7 +1762,11 @@ SiS_CloseCRTC(struct SiS_Private *SiS_Pr)
+ #if 0 /* This locks some CRTC registers. We don't want that. */
+    unsigned short temp1 = 0, temp2 = 0;
+ 
+-   if(IS_SIS661741660760) {
++   switch(SiS_Pr->ChipType) {
++   case SIS_661:
++   case SIS_741:
++   case SIS_660:
++   case SIS_760:
+       if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) {
+          temp1 = 0xa0; temp2 = 0x08;
+       }
+@@ -1953,7 +1967,8 @@ SiS_SetATTRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
+ 	    }
+ 	 } else if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCD) {
+ 	    if(SiS_Pr->ChipType >= SIS_315H) {
+-	       if(IS_SIS550650740660) {
++	       if((SiS_Pr->ChipType >= SIS_550) &&
++		  (SiS_Pr->ChipType != SIS_330)) {
+ 		  /* 315, 330 don't do this */
+ 		  if(SiS_Pr->SiS_VBType & VB_SIS30xB) {
+ 		     if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
+@@ -3134,7 +3149,7 @@ SiS_StrangeStuff(struct SiS_Private *SiS_Pr)
+     * this here.
+     */
+ #ifdef SIS315H
+-   if((IS_SIS651) || (IS_SISM650) ||
++   if((SiS_Pr->SiS_SysFlags & SF_Is65x) ||
+       SiS_Pr->ChipType == SIS_340 ||
+       SiS_Pr->ChipType == XGI_40) {
+       SiS_SetReg(SiS_Pr->SiS_VidCapt, 0x3f, 0x00);   /* Fiddle with capture regs */
+@@ -3401,7 +3416,7 @@ SiSSetMode(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 
+ 	 SiS_SetReg(SiS_Pr->SiS_P3d4,0x38,backupreg);
+ 
+-	 if((IS_SIS650) && (SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & 0xfc)) {
++	 if((SiS_Pr->ChipType == SIS_650) && (SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & 0xfc)) {
+ 	    if((ModeNo == 0x03) || (ModeNo == 0x10)) {
+ 	       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x80);
+ 	       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x56,0x08);
+diff --git a/src/init301.c b/src/init301.c
+index ffa6eaa..603ecb6 100644
+--- a/src/init301.c
++++ b/src/init301.c
+@@ -984,7 +984,7 @@ SiS_GetVBInfo(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
+ 		 /* Reset LCDA setting if not driver mode */
+ 		 SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x38,0xfc);
+ 	      }
+-	      if(IS_SIS650) {
++	      if(SiS_Pr->ChipType == SIS_650) {
+ 		 if(SiS_Pr->SiS_UseLCDA) {
+ 		    if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x5f) & 0xF0) {
+ 		       if((ModeNo <= 0x13) || (!(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & (DriverMode >> 8)))) {
+@@ -2557,7 +2557,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned
+ 	if(SiS_Pr->SiS_IF_DEF_LVDS == 1) {
+ 	   SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x00,0xa0,tempah);
+ 	} else if(SiS_Pr->SiS_VBType & VB_SISVB) {
+-	   if(IS_SIS740) {
++	   if(SiS_Pr->ChipType == SIS_740) {
+ 	      SiS_SetReg(SiS_Pr->SiS_Part1Port,0x00,tempah);
+ 	   } else {
+ 	      SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x00,0xa0,tempah);
+@@ -2690,7 +2690,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned
+ 
+ 	/* 740 variants match for 30xB, 301B-DH, 30xLV */
+ 
+-	if(!(IS_SIS740)) {
++	if(SiS_Pr->ChipType != SIS_740) {
+ 	   tempah = 0x04;						   /* For all bridges */
+ 	   tempbl = 0xfb;
+ 	   if(!(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) {
+@@ -2711,7 +2711,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned
+ 	 * chipset than the bridge revision.
+ 	 */
+ 
+-	if((IS_SIS740) || (SiS_Pr->ChipType >= SIS_661) || (SiS_Pr->SiS_ROMNew)) {
++	if((SiS_Pr->ChipType == SIS_740) || (SiS_Pr->ChipType >= SIS_661) || (SiS_Pr->SiS_ROMNew)) {
+ 	   tempah = 0x30;
+ 	   tempbl = 0xc0;
+ 	   if((SiS_Pr->SiS_VBInfo & DisableCRT2Display) ||
+@@ -2735,7 +2735,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned
+ 	         tempah = tempah2 = 0x00;
+ 	   } else if(SiS_Pr->SiS_TVBlue == -1) {
+ 	      /* Set on 651/M650, clear on 315/650 */
+-	      if(!(IS_SIS65x)) /* (bridgerev != 0xb0) */ {
++	     if(!(SiS_Pr->SiS_SysFlags & SF_Is65x)) /* (bridgerev != 0xb0) */ {
+ 	         tempah = tempah2 = 0x00;
+ 	      }
+ 	   }
+@@ -2754,7 +2754,7 @@ SiS_SetCRT2ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned
+ 	   SiS_SetRegANDOR(SiS_Pr->SiS_Part4Port,0x21,tempbl2,tempah2);
+ 	}
+ 
+-	if(IS_SIS740) {
++	if(SiS_Pr->ChipType == SIS_740) {
+ 	   tempah = 0x80;
+ 	   if(SiS_Pr->SiS_VBInfo & DisableCRT2Display) tempah = 0x00;
+ 	   SiS_SetRegANDOR(SiS_Pr->SiS_Part4Port,0x23,0x7f,tempah);
+@@ -4053,7 +4053,7 @@ SiS_DisableBridge(struct SiS_Private *SiS_Pr)
+ 		 SiS_DDC2Delay(SiS_Pr,0xe000);
+ 		 SiS_SetRegByte(SiS_Pr->SiS_P3c6,0x00);
+ 		 pushax = SiS_GetReg(SiS_Pr->SiS_P3c4,0x06);
+-		 if(IS_SIS740) {
++		 if(SiS_Pr->ChipType == SIS_740) {
+ 		    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x06,0xE3);
+ 		 }
+ 	         SiS_PanelDelay(SiS_Pr, 3);
+@@ -4482,7 +4482,7 @@ SiS_EnableBridge(struct SiS_Private *SiS_Pr)
+ 	    SiS_SetRegByte(SiS_Pr->SiS_P3c6,0x00);
+ 	    SiS_DisplayOff(SiS_Pr);
+ 	    pushax = SiS_GetReg(SiS_Pr->SiS_P3c4,0x06);
+-	    if(IS_SIS740) {
++	    if(SiS_Pr->ChipType == SIS_740) {
+ 	       SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x06,0xE3);
+ 	    }
+ 
+@@ -5564,9 +5564,9 @@ SiS_SetGroup1_LVDS(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned s
+ 
+ #ifdef SIS315H
+   if((SiS_Pr->ChipType >= SIS_315H) && (SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) {
+-     if(IS_SIS330) {
++     if(SiS_Pr->ChipType == SIS_330) {
+         SiS_SetRegOR(SiS_Pr->SiS_Part1Port,0x2D,0x10);
+-     } else if(IS_SIS740) {
++     } else if(SiS_Pr->ChipType == SIS_740) {
+         if(islvds) {
+            SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x13,0xfb,0x04);
+ 	   SiS_SetRegOR(SiS_Pr->SiS_Part1Port,0x2D,0x03);
+@@ -9741,7 +9741,7 @@ GetLCDPtrIndexBIOS(struct SiS_Private *SiS_Pr)
+ {
+   unsigned short index;
+ 
+-  if((IS_SIS650) && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
++  if((SiS_Pr->ChipType == SIS_650) && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
+      if(!(SiS_IsNotM650orLater(SiS_Pr))) {
+         if((index = SiS_GetReg(SiS_Pr->SiS_P3d4,0x36) & 0xf0)) {
+ 	   index >>= 4;
+@@ -9888,9 +9888,9 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+      else {
+         delay = 0x04;
+         if(SiS_Pr->SiS_VBType & VB_SIS30xB) {
+-	   if(IS_SIS650) {
++	   if(SiS_Pr->ChipType == SIS_650) {
+ 	      delay = 0x0a;
+-	   } else if(IS_SIS740) {
++	   } else if(SiS_Pr->ChipType == SIS_740) {
+ 	      delay = 0x00;
+ 	   } else if(SiS_Pr->ChipType < SIS_330) {
+ 	      delay = 0x0c;
+@@ -9939,7 +9939,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 	         delay = 0x00;
+ 	      }
+ 	   } else if(SiS_Pr->SiS_VBType & VB_SISLVDS) {
+-	      if(IS_SIS740) delay = 0x01;
++	      if(SiS_Pr->ChipType == SIS_740) delay = 0x01;
+ 	      else          delay = 0x03;
+ 	   }
+ 	   SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x2d,0xf0,delay);
+@@ -9986,7 +9986,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+         index = GetLCDPtrIndexBIOS(SiS_Pr);
+         myindex = GetLCDPtrIndex(SiS_Pr);
+ 
+-        if(IS_SIS650 && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
++        if(SiS_Pr->ChipType == SIS_650 && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
+ 
+            if(SiS_IsNotM650orLater(SiS_Pr)) {
+ 
+@@ -10024,22 +10024,22 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 
+         } else if(SiS_Pr->SiS_IF_DEF_LVDS == 1) {
+ 
+-	   if(IS_SIS740) delay = 0x03;
++	   if(SiS_Pr->ChipType == SIS_740) delay = 0x03;
+ 	   else          delay = 0x00;
+ 
+ 	} else {
+ 
+            delay = SiS310_LCDDelayCompensation_301[myindex];
+ 	   if(SiS_Pr->SiS_VBType & VB_SISLVDS) {
+-	      if(IS_SIS740) delay = 0x01;
++	      if(SiS_Pr->ChipType == SIS_740) delay = 0x01;
+ 	      else if(SiS_Pr->ChipType <= SIS_315PRO) delay = SiS310_LCDDelayCompensation_3xx301LV[myindex];
+ 	      else          delay = SiS310_LCDDelayCompensation_650301LV[myindex];
+ 	   } else if(SiS_Pr->SiS_VBType & VB_SIS301C) {
+-	      if(IS_SIS740) delay = 0x01;  /* ? */
++	      if(SiS_Pr->ChipType == SIS_740) delay = 0x01;  /* ? */
+ 	      else          delay = 0x03;
+ 	      if(SiS_Pr->SiS_LCDResInfo == Panel_1600x1200) delay = 0x00; /* experience */
+ 	   } else if(SiS_Pr->SiS_VBType & VB_SIS30xB) {
+-	      if(IS_SIS740) delay = 0x01;
++	      if(SiS_Pr->ChipType == SIS_740) delay = 0x01;
+ 	      else          delay = SiS310_LCDDelayCompensation_3xx301B[myindex];
+ 	   }
+ 
+@@ -10056,7 +10056,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 
+      index = GetTVPtrIndex(SiS_Pr);
+ 
+-     if(IS_SIS650 && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
++     if((SiS_Pr->ChipType == SIS_650) && (SiS_Pr->SiS_VBType & VB_SISLVDS)) {
+ 
+         if(SiS_IsNotM650orLater(SiS_Pr)) {
+ 
+@@ -10112,7 +10112,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 
+ 	delay = SiS310_TVDelayCompensation_301[index];
+         if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {
+-	   if(IS_SIS740) {
++	   if(SiS_Pr->ChipType == SIS_740) {
+ 	      delay = SiS310_TVDelayCompensation_740301B[index];
+ 	      /* LV: use 301 data? BIOS bug? */
+ 	   } else {
+@@ -10134,7 +10134,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+ 
+   if(SiS_Pr->SiS_VBType & VB_SISVB) {
+ 
+-     if(IS_SIS650 && (SiS_Pr->SiS_VBType & VB_SISLVDS) && dochiptest) {
++    if((SiS_Pr->ChipType == SIS_650) && (SiS_Pr->SiS_VBType & VB_SISLVDS) && dochiptest) {
+ 
+         temp = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x36) & 0xf0) >> 4;
+         if(temp == 8) {		/* 1400x1050 BIOS (COMPAL) */
+@@ -10159,7 +10159,7 @@ SetDelayComp(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
+      if(SiS_Pr->SiS_VBInfo & SetCRT2ToTV) {
+         SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x2D,0xF0,delay);
+      } else {
+-        if(IS_SIS650 && (SiS_Pr->SiS_IF_DEF_CH70xx != 0)) {
++       if((SiS_Pr->ChipType == SIS_650) && (SiS_Pr->SiS_IF_DEF_CH70xx != 0)) {
+            delay <<= 4;
+            SiS_SetRegANDOR(SiS_Pr->SiS_Part1Port,0x2D,0x0F,delay);
+         } else {
+@@ -10705,7 +10705,7 @@ SiS_FinalizeLCD(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned shor
+      modeflag =  SiS_Pr->SiS_EModeIDTable[ModeIdIndex].Ext_ModeFlag;
+   }
+ 
+-  if(IS_SIS650) {
++  if(SiS_Pr->ChipType == SIS_650) {
+      if(!(SiS_GetReg(SiS_Pr->SiS_P3d4, 0x5f) & 0xf0)) {
+         if(SiS_Pr->SiS_CustomT == CUT_CLEVO1024) {
+ 	   SiS_SetRegOR(SiS_Pr->SiS_Part1Port,0x1e,0x02);
+diff --git a/src/initdef.h b/src/initdef.h
+index 62ec836..a186033 100644
+--- a/src/initdef.h
++++ b/src/initdef.h
+@@ -51,24 +51,6 @@
+ #ifndef _INITDEF_
+ #define _INITDEF_
+ 
+-#define IS_SIS330		(SiS_Pr->ChipType == SIS_330)
+-#define IS_SIS550		(SiS_Pr->ChipType == SIS_550)
+-#define IS_SIS650		(SiS_Pr->ChipType == SIS_650)  /* All versions, incl 651, M65x */
+-#define IS_SIS740		(SiS_Pr->ChipType == SIS_740)
+-#define IS_SIS651	        (SiS_Pr->SiS_SysFlags & (SF_Is651 | SF_Is652))
+-#define IS_SISM650	        (SiS_Pr->SiS_SysFlags & (SF_IsM650 | SF_IsM652 | SF_IsM653))
+-#define IS_SIS65x               (IS_SIS651 || IS_SISM650)       /* Only special versions of 65x */
+-#define IS_SIS661		(SiS_Pr->ChipType == SIS_661)
+-#define IS_SIS741		(SiS_Pr->ChipType == SIS_741)
+-#define IS_SIS660		(SiS_Pr->ChipType == SIS_660)
+-#define IS_SIS760		(SiS_Pr->ChipType == SIS_760)
+-#define IS_SIS761		(SiS_Pr->ChipType == SIS_761)
+-#define IS_SIS661741660760	(IS_SIS661 || IS_SIS741 || IS_SIS660 || IS_SIS760 || IS_SIS761)
+-#define IS_SIS650740            ((SiS_Pr->ChipType >= SIS_650) && (SiS_Pr->ChipType < SIS_330))
+-#define IS_SIS550650740         (IS_SIS550 || IS_SIS650740)
+-#define IS_SIS650740660         (IS_SIS650 || IS_SIS740 || IS_SIS661741660760)
+-#define IS_SIS550650740660      (IS_SIS550 || IS_SIS650740660)
+-
+ #define SISGETROMW(x)		(ROMAddr[(x)] | (ROMAddr[(x)+1] << 8))
+ 
+ /* SiS_VBType */
+@@ -225,6 +207,7 @@
+ #define SF_Is652		0x0004
+ #define SF_IsM652		0x0008
+ #define SF_IsM653		0x0010
++#define SF_Is65x		(SF_Is651 | SF_IsM650 | SF_Is652 | SF_IsM652 | SF_IsM653)
+ #define SF_IsM661		0x0020
+ #define SF_IsM741		0x0040
+ #define SF_IsM760		0x0080
+-- 
+1.7.4.1
+

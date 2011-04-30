@@ -1,0 +1,138 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis.h        |   40 +-----------------------------
+ src/sis_config.h |   71 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 72 insertions(+), 39 deletions(-)
+ create mode 100644 src/sis_config.h
+
+diff --git a/src/sis.h b/src/sis.h
+index 9ef30b8..b8dba90 100644
+--- a/src/sis.h
++++ b/src/sis.h
+@@ -173,45 +173,7 @@
+ #include "sis_dri.h"
+ #endif /* XF86DRI */
+ 
+-/* Configurable stuff: ------------------------------------- */
+-
+-#define SISDUALHEAD		/* Include Dual Head code  */
+-
+-#define SISMERGED		/* Include Merged-FB code */
+-
+-#undef SISXINERAMA
+-#ifdef SISMERGED
+-#define SISXINERAMA		/* Include SiS Pseudo-Xinerama for MergedFB mode */
+-#define SIS_XINERAMA_MAJOR_VERSION  1
+-#define SIS_XINERAMA_MINOR_VERSION  1
+-#endif
+-
+-#define SIS_ARGB_CURSOR		/* Include code for color hardware cursors */
+-
+-#define ENABLE_YPBPR		/* Include YPbPr support on SiS bridges (315 series and 661/741/760) */
+-
+-#define SISVRAMQ		/* Use VRAM queue mode on 315/330/340/XGI series */
+-
+-#undef INCL_YUV_BLIT_ADAPTOR
+-#ifdef SISVRAMQ
+-#define INCL_YUV_BLIT_ADAPTOR	/* Include support for YUV->RGB blit adaptors (VRAM queue mode only) */
+-#endif
+-
+-#if 1
+-#define SIS_USE_XAA		/* Include code for XAA */
+-#endif
+-
+-#ifdef SISVRAMQ
+-#ifdef XORG_VERSION_CURRENT
+-#if defined(SIS_HAVE_EXA) || (defined(XF86EXA) && (XF86EXA != 0))
+-#if 1
+-#define SIS_USE_EXA		/* Include code for EXA */
+-#endif
+-#endif
+-#endif
+-#endif
+-
+-/* End of configurable stuff --------------------------------- */
++#include "sis_config.h"
+ 
+ #define UNLOCK_ALWAYS		/* Always unlock the registers (should be set!) */
+ 
+diff --git a/src/sis_config.h b/src/sis_config.h
+new file mode 100644
+index 0000000..b8b625c
+--- /dev/null
++++ b/src/sis_config.h
+@@ -0,0 +1,71 @@
++/*
++ * Configurable compile-time options
++ *
++ * Copyright (C) 2001-2005 by Thomas Winischhofer, Vienna, Austria
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1) Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2) Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3) The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * Author:   Thomas Winischhofer <thomas at winischhofer.net>
++ *
++ */
++
++#undef SISXINERAMA
++#undef INCL_YUV_BLIT_ADAPTOR
++
++/* Configurable stuff: ------------------------------------- */
++
++#define SISDUALHEAD		/* Include Dual Head support  */
++
++#define SISMERGED		/* Include Merged-FB support */
++
++#ifdef SISMERGED
++#define SISXINERAMA		/* Include SiS Pseudo-Xinerama support for MergedFB mode */
++#define SIS_XINERAMA_MAJOR_VERSION  1
++#define SIS_XINERAMA_MINOR_VERSION  1
++#endif
++
++#define SIS_ARGB_CURSOR		/* Include support for color hardware cursors */
++
++#define ENABLE_YPBPR		/* Include YPbPr support on SiS bridges (315 series and 661/741/760) */
++
++#define SISVRAMQ		/* Use VRAM queue mode on 315/330/340/XGI series */
++
++#ifdef SISVRAMQ
++#define INCL_YUV_BLIT_ADAPTOR	/* Include support for YUV->RGB blit adaptors (VRAM queue mode only) */
++#endif
++
++#if 1
++#define SIS_USE_XAA		/* Include support for XAA */
++#endif
++
++#ifdef SISVRAMQ
++#ifdef XORG_VERSION_CURRENT
++#if defined(SIS_HAVE_EXA) || (defined(XF86EXA) && (XF86EXA != 0))
++#if 1
++#define SIS_USE_EXA		/* Include support for EXA */
++#endif
++#endif
++#endif
++#endif
++
++/* End of configurable stuff --------------------------------- */
+-- 
+1.7.4.1
+

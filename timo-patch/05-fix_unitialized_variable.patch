@@ -1,0 +1,22 @@
+Signed-off-by: Timo Aaltonen <timo.aaltonen at canonical.com>
+---
+ src/sis_utility.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
+diff --git a/src/sis_utility.c b/src/sis_utility.c
+index 0892cf5..0e9dc5b 100644
+--- a/src/sis_utility.c
++++ b/src/sis_utility.c
+@@ -1550,7 +1550,9 @@ SiSHandleSiSDirectCommand(xSiSCtrlCommandReply *sdcbuf)
+ #ifdef SISMERGED
+       if(pSiS->MergedFB) {
+          int clk, hd, hss, hse, ht, vd, vss, vse, vt;
+-	 unsigned int pos, crt1x, crt1y, crt1clk, crt2x, crt2y, crt2clk;
++	 unsigned int pos;
++	 unsigned int crt1x = 0, crt1y = 0, crt1clk = 0;
++	 unsigned int crt2x = 0, crt2y = 0, crt2clk = 0;
+ 
+ 	 clk   = sdcbuf->sdc_parm[0];
+ 	 hd    = sdcbuf->sdc_parm[1];
+-- 
+1.7.4.1
