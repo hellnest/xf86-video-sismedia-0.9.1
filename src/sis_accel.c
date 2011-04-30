@@ -781,50 +781,50 @@ SiSAccelInit(ScreenPtr pScreen)
 
 #ifdef SIS_USE_EXA	/* ----------------------- EXA ----------------------- */
        if(pSiS->useEXA) {
-//#if  XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(7,0,0,0,0)
+#if  XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(7,0,0,0,0)
 
 	  /* data */
-//	  pSiS->EXADriverPtr->card.memoryBase = pSiS->FbBase;
-//	  pSiS->EXADriverPtr->card.memorySize = pSiS->maxxfbmem;
-//	  pSiS->EXADriverPtr->card.offScreenBase = pScrn->displayWidth * pScrn->virtualY
-//						* (pScrn->bitsPerPixel >> 3);
-//	  if(pSiS->EXADriverPtr->card.memorySize > pSiS->EXADriverPtr->card.offScreenBase) {
-//	     pSiS->EXADriverPtr->card.flags = EXA_OFFSCREEN_PIXMAPS;
-//	  } else {
-//	     pSiS->NoXvideo = TRUE;
-//	     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-//		"Not enough video RAM for offscreen memory manager. Xv disabled\n");
-//	  }
-//#if  XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(6,8,2,0,0)
-//	  pSiS->EXADriverPtr->card.offscreenByteAlign = 8;	/* src/dst: double quad word boundary */
-//	  pSiS->EXADriverPtr->card.offscreenPitch = 1;
-//#else
-//	  pSiS->EXADriverPtr->card.pixmapOffsetAlign = 8;	/* src/dst: double quad word boundary */
-//	  pSiS->EXADriverPtr->card.pixmapPitchAlign = 8;	/* could possibly be 1, but who knows for sure */
-//#endif
-//	  pSiS->EXADriverPtr->card.maxX = 2047;
-//	  pSiS->EXADriverPtr->card.maxY = 2047;
+	  pSiS->EXADriverPtr->card.memoryBase = pSiS->FbBase;
+	  pSiS->EXADriverPtr->card.memorySize = pSiS->maxxfbmem;
+	  pSiS->EXADriverPtr->card.offScreenBase = pScrn->displayWidth * pScrn->virtualY
+						* (pScrn->bitsPerPixel >> 3);
+	  if(pSiS->EXADriverPtr->card.memorySize > pSiS->EXADriverPtr->card.offScreenBase) {
+	     pSiS->EXADriverPtr->card.flags = EXA_OFFSCREEN_PIXMAPS;
+	  } else {
+	     pSiS->NoXvideo = TRUE;
+	     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		"Not enough video RAM for offscreen memory manager. Xv disabled\n");
+	  }
+#if  XORG_VERSION_CURRENT < XORG_VERSION_NUMERIC(6,8,2,0,0)
+	  pSiS->EXADriverPtr->card.offscreenByteAlign = 8;	/* src/dst: double quad word boundary */
+	  pSiS->EXADriverPtr->card.offscreenPitch = 1;
+#else
+	  pSiS->EXADriverPtr->card.pixmapOffsetAlign = 8;	/* src/dst: double quad word boundary */
+	  pSiS->EXADriverPtr->card.pixmapPitchAlign = 8;	/* could possibly be 1, but who knows for sure */
+#endif
+	  pSiS->EXADriverPtr->card.maxX = 2047;
+	  pSiS->EXADriverPtr->card.maxY = 2047;
 
 	  /* Sync */
-//	  pSiS->EXADriverPtr->accel.WaitMarker = SiSEXASync;
+	  pSiS->EXADriverPtr->accel.WaitMarker = SiSEXASync;
 
 	  /* Solid fill */
-//	  pSiS->EXADriverPtr->accel.PrepareSolid = SiSPrepareSolid;
-//	  pSiS->EXADriverPtr->accel.Solid = SiSSolid;
-//	  pSiS->EXADriverPtr->accel.DoneSolid = SiSDoneSolid;
+	  pSiS->EXADriverPtr->accel.PrepareSolid = SiSPrepareSolid;
+	  pSiS->EXADriverPtr->accel.Solid = SiSSolid;
+	  pSiS->EXADriverPtr->accel.DoneSolid = SiSDoneSolid;
 
 	  /* Copy */
-//	  pSiS->EXADriverPtr->accel.PrepareCopy = SiSPrepareCopy;
-//	  pSiS->EXADriverPtr->accel.Copy = SiSCopy;
-//	  pSiS->EXADriverPtr->accel.DoneCopy = SiSDoneCopy;
+	  pSiS->EXADriverPtr->accel.PrepareCopy = SiSPrepareCopy;
+	  pSiS->EXADriverPtr->accel.Copy = SiSCopy;
+	  pSiS->EXADriverPtr->accel.DoneCopy = SiSDoneCopy;
 
 	  /* Composite not supported */
 
 	  /* Upload, download to/from Screen */
-//	  pSiS->EXADriverPtr->accel.UploadToScreen = SiSUploadToScreen;
-//	  pSiS->EXADriverPtr->accel.DownloadFromScreen = SiSDownloadFromScreen;
+	  pSiS->EXADriverPtr->accel.UploadToScreen = SiSUploadToScreen;
+	  pSiS->EXADriverPtr->accel.DownloadFromScreen = SiSDownloadFromScreen;
 
-//#else /*xorg>=7.0*/
+#else /*xorg>=7.0*/
 
 	  pSiS->EXADriverPtr->exa_major = 2;
 	  pSiS->EXADriverPtr->exa_minor = 0;
@@ -867,7 +867,7 @@ SiSAccelInit(ScreenPtr pScreen)
 
 #endif  /*end of Xorg>=7.0 EXA Setting*/       
        }
-//#endif /* EXA */
+#endif /* EXA */
 
     }  /* NoAccel */
 
@@ -946,11 +946,11 @@ SiSAccelInit(ScreenPtr pScreen)
 						SiSScratchSave, pSiS);
 	  if(pSiS->exa_scratch) {
 	     pSiS->exa_scratch_next = pSiS->exa_scratch->offset;
-       //#if  XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(7,0,0,0,0)
-       //      pSiS->EXADriverPtr->accel.UploadToScratch = SiSUploadToScratch;
-       //#else
+       #if  XORG_VERSION_CURRENT <= XORG_VERSION_NUMERIC(7,0,0,0,0)
+             pSiS->EXADriverPtr->accel.UploadToScratch = SiSUploadToScratch;
+       #else
              pSiS->EXADriverPtr->UploadToScratch = SiSUploadToScratch;
-       //#endif
+       #endif
 	  }
 
        } else {

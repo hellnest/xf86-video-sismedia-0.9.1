@@ -156,18 +156,18 @@ SISSetupDGAMode(
 
 	if(pMode->HDisplay != otherPitch) {
 
-	    newmodes = realloc(modes, (*num + 2) * sizeof(DGAModeRec));
+	    newmodes = xrealloc(modes, (*num + 2) * sizeof(DGAModeRec));
 	    oneMore  = TRUE;
 
 	} else {
 
-	    newmodes = realloc(modes, (*num + 1) * sizeof(DGAModeRec));
+	    newmodes = xrealloc(modes, (*num + 1) * sizeof(DGAModeRec));
 	    oneMore  = FALSE;
 
 	}
 
 	if(!newmodes) {
-	    free(modes);
+	    xfree(modes);
 	    return NULL;
 	}
 	modes = newmodes;
@@ -353,12 +353,12 @@ SISDGAReInit(ScrnInfoPtr pScrn)
     newdgamodes = SISDGAMakeModes(pScrn, &newdgamodenum, TRUE);
 
     if(DGAReInitModes(screenInfo.screens[pScrn->scrnIndex], newdgamodes, newdgamodenum)) {
-       free(pSiS->DGAModes);
+       xfree(pSiS->DGAModes);
        pSiS->DGAModes = newdgamodes;
        pSiS->numDGAModes = newdgamodenum;
        return TRUE;
     } else {
-       free(newdgamodes);
+       xfree(newdgamodes);
        return FALSE;
     }
 #else

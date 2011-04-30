@@ -9319,7 +9319,7 @@ void
 SiS_SiS30xBLOff(struct SiS_Private *SiS_Pr)
 {
   /* Switch off LCD backlight on SiS30xLV */
-  SiS_SetRegAND(SiS_Pr->SiS_Part4Port,0x26,0xFC);
+  SiS_SetRegAND(SiS_Pr->SiS_Part4Port,0x26,0xFE);
   SiS_DDC2Delay(SiS_Pr,0xff00);
 }
 

@@ -779,9 +779,6 @@ static Bool SISSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
 static void SISNewAdjustFrame(int scrnIndex, int x, int y, int flags);
 static Bool SISPMEvent(int scrnIndex, pmEvent event, Bool undo);/*APM-ACPI, adding by Ivans.*/
 
-#if XSERVER_LIBPCIACCESS
-static Bool SIS_pci_probe(DriverPtr driver, int entity_num, struct pci_device *device, intptr_t match_data);
-#endif
 /* ACPI Device Switch functions */
 static Bool SISHotkeySwitchCRT1Status(ScrnInfoPtr pScrn,int onoff);/*hotkey pressing: switch CRT1 on/off*/
 static Bool SISHotkeySwitchCRT2Status(ScrnInfoPtr pScrn,ULong newvbflags ,ULong newvbflags3);/*LCD on/off*/
@@ -790,6 +787,10 @@ static Bool SISHotkeySwitchMode(ScrnInfoPtr pScrn, Bool adjust);/*Resolution opt
 /* Optional functions */
 #ifdef SISDUALHEAD
 static Bool	SISSaveScreenDH(ScreenPtr pScreen, int mode);
+#endif
+#ifdef X_XF86MiscPassMessage
+extern int	SISHandleMessage(int scrnIndex, const char *msgtype,
+				const char *msgval, char **retmsg);
 #endif
 static void     SISFreeScreen(int scrnIndex, int flags);
 static ModeStatus SISValidMode(int scrnIndex, DisplayModePtr mode,

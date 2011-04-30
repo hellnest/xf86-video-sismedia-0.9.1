@@ -43,9 +43,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#ifndef GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
-#endif
 #include "compiler.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
@@ -274,7 +272,7 @@ void SiSInitMC(ScreenPtr pScreen)
  *  Set *num_priv to the number of 32bit words that make up the size of
  *  of the data that priv will point to.
  *
- *  *priv = (long *) calloc (elements, sizeof(element))
+ *  *priv = (long *) xcalloc (elements, sizeof(element))
  *  *num_priv = (elements * sizeof(element)) >> 2;
  *
  **************************************************************************/
@@ -310,7 +308,7 @@ int SiSXvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
     return BadAlloc;
   }
 
-  *priv = calloc(1,sizeof(SiSXvMCCreateContextRec));
+  *priv = xcalloc(1,sizeof(SiSXvMCCreateContextRec));
   contextRec = (SiSXvMCCreateContextRec *)*priv;
 
   if(!*priv) {
@@ -322,7 +320,7 @@ int SiSXvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
   if(drmCreateContext(pSiS->drmSubFD, &(contextRec->drmcontext) ) < 0) {
     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
         "[MC] SiSXvMCCreateContext: Unable to create DRMContext!\n");
-    free(*priv);
+    xfree(*priv);
     return BadAlloc;
   }
 
@@ -336,7 +334,7 @@ int SiSXvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
   	DRM_FRAME_BUFFER, 0, &pSiS->fb_handle) < 0){
   	
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,"[MC] Frame buffer AddMap  failed!\n");
-		free(*priv);
+		xfree(*priv);
 		*num_priv = 0;
 		return BadAlloc;
   }
@@ -357,7 +355,7 @@ int SiSXvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
      break;
   default:
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR," [MC] XvMC is not supposted on this chip! Stop.\n");
-      free(*priv);
+      xfree(*priv);
       *num_priv = 0;
       return BadValue;
   }
@@ -408,7 +406,7 @@ int SiSXvMCCreateSurface (ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
 #endif
 
 
-  *priv = calloc(1,sizeof(SiSXvMCCreateSurfaceRec));
+  *priv = xcalloc(1,sizeof(SiSXvMCCreateSurfaceRec));
   
 
   if(!*priv) {
@@ -435,7 +433,7 @@ int SiSXvMCCreateSurface (ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
   }
 
   
-  free(*priv);
+  xfree(*priv);
   return BadAlloc;
 
 }
@@ -454,7 +452,7 @@ int SiSXvMCCreateSubpicture (ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp,
 				  __FUNCTION__, __FILE__);
 #endif
 
-   *priv = (long *)calloc(1,sizeof(long));
+   *priv = (long *)xcalloc(1,sizeof(long));
 
    if(!*priv) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,

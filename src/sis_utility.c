@@ -40,6 +40,8 @@
 #define NEED_EVENTS
 #include <X11/X.h>
 #include "dixstruct.h"
+#define _XF86MISC_SERVER_
+#include <X11/extensions/xf86misc.h>
 
 #include "sis_videostr.h"
 
@@ -260,6 +262,9 @@ typedef struct {
     int		 (*HandleSiSDirectCommand[SISCTRL_MAX_SCREENS])(xSiSCtrlCommandReply *);
 } xSiSCtrlScreenTable;
 
+#ifdef X_XF86MiscPassMessage
+int		SISHandleMessage(int scrnIndex, const char *msgtype, const char *msgval, char **retmsg);
+#endif
 void		SiSCtrlExtInit(ScrnInfoPtr pScrn);
 void		SiSCtrlExtUnregister(SISPtr pSiS, int index);
 
@@ -968,6 +973,19 @@ unsigned int SISVGADetected(ScrnInfoPtr pScrn)
 
 	return detected;
 }
+
+/***********************************
+ *     MessageHandler interface    *
+ *   (unused now; use extension)   *
+ ***********************************/
+
+#ifdef X_XF86MiscPassMessage
+int
+SISHandleMessage(int scrnIndex, const char *msgtype, const char *msgval, char **retmsg)
+{
+    return BadMatch;
+}
+#endif
 
 /***********************************
  *   SiSCtrl extension interface   *
@@ -2185,7 +2203,7 @@ SiSCtrlResetProc(ExtensionEntry* extEntry)
      * in SiSCtrlExtUnregister())
      */
     if(extEntry->extPrivate) {
-       free(extEntry->extPrivate);
+       xfree(extEntry->extPrivate);
        extEntry->extPrivate = NULL;
     }
 }
@@ -2206,7 +2224,7 @@ SiSCtrlExtInit(ScrnInfoPtr pScrn)
 
    if(!(myext = CheckExtension(SISCTRL_PROTOCOL_NAME))) {
 
-      if(!(myctrl = calloc(sizeof(xSiSCtrlScreenTable), 1)))
+      if(!(myctrl = xcalloc(sizeof(xSiSCtrlScreenTable), 1)))
          return;
 
       if(!(myext = AddExtension(SISCTRL_PROTOCOL_NAME, 0, 0,
@@ -2216,7 +2234,7 @@ SiSCtrlExtInit(ScrnInfoPtr pScrn)
 				StandardMinorOpcode))) {
          xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 	 		"Failed to add SISCTRL extension\n");
-	 free(myctrl);
+	 xfree(myctrl);
 	 return;
       }
 

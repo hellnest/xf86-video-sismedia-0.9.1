@@ -159,8 +159,7 @@ typedef enum {
     OPTION_PSEUDO,
     OPTION_FUTRO_TIMING, /*chaoyu's modified: for Fuji-Siemans specail timing*/
     OPTION_TRACEVGAMISCW,
-    OPTION_USETIMING1366,  /*option of enable 1366x768 timing for LVDS panel. Ivans@090109*/
-    OPTION_IGNOREHOTKEYFLAG
+    OPTION_USETIMING1366  /*option of enable 1366x768 timing for LVDS panel. Ivans@090109*/
 } SISOpts;
 
 static const OptionInfoRec SISOptions[] = {
@@ -306,7 +305,6 @@ static const OptionInfoRec SISOptions[] = {
     { OPTION_FUTRO_TIMING,		"FutroTiming",			OPTV_BOOLEAN,   {0}, FALSE },/*chaoyu's modified: for Fuji-seimans special timing*/
     { OPTION_TRACEVGAMISCW,             "TraceVgaMISCW",                OPTV_BOOLEAN,   {0}, FALSE },/*Ivans added for helping detected CRT1 using BIOS setting.*/
     { OPTION_USETIMING1366,              "UseTiming1366",                  OPTV_BOOLEAN,   {0}, FALSE },/*enable 1366 timing on LVDS, Ivans@090109*/
-    { OPTION_IGNOREHOTKEYFLAG,		"IgnoreHotkeyFlag",		OPTV_BOOLEAN,	{0}, FALSE },
     { -1,				NULL,				OPTV_NONE,	{0}, FALSE }
 };
 
@@ -459,7 +457,7 @@ SiSOptions(ScrnInfoPtr pScrn)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    if(!(pSiS->Options = malloc(sizeof(SISOptions)))) return;
+    if(!(pSiS->Options = xalloc(sizeof(SISOptions)))) return;
 
     memcpy(pSiS->Options, SISOptions, sizeof(SISOptions));
 
@@ -626,7 +624,6 @@ SiSOptions(ScrnInfoPtr pScrn)
     pSiS->CRT2IsScrn0 = FALSE;
 #endif
 #endif
-    pSiS->IgnoreHotkeyFlag = FALSE;
   
     /* Chipset dependent defaults */
 
@@ -920,7 +917,7 @@ SiSOptions(ScrnInfoPtr pScrn)
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2POS))) {
 	     int result;
 	     Bool valid = FALSE;
-	     char *tempstr = malloc(strlen(strptr) + 1);
+	     char *tempstr = xalloc(strlen(strptr) + 1);
 	     result = sscanf(strptr, "%s %d", tempstr, &ival);
 	     if(result >= 1) {
 		if(!xf86NameCmp(tempstr,"LeftOf")) {
@@ -978,18 +975,18 @@ SiSOptions(ScrnInfoPtr pScrn)
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		    "Except for \"Clone\", the parameter may be followed by an integer.\n");
 	     }
-	     free(tempstr);
+	     xfree(tempstr);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_METAMODES))) {
-	     pSiS->MetaModes = malloc(strlen(strptr) + 1);
+	     pSiS->MetaModes = xalloc(strlen(strptr) + 1);
 	     if(pSiS->MetaModes) memcpy(pSiS->MetaModes, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2HSYNC))) {
-	     pSiS->CRT2HSync = malloc(strlen(strptr) + 1);
+	     pSiS->CRT2HSync = xalloc(strlen(strptr) + 1);
 	     if(pSiS->CRT2HSync) memcpy(pSiS->CRT2HSync, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_CRT2VREFRESH))) {
-	     pSiS->CRT2VRefresh = malloc(strlen(strptr) + 1);
+	     pSiS->CRT2VRefresh = xalloc(strlen(strptr) + 1);
 	     if(pSiS->CRT2VRefresh) memcpy(pSiS->CRT2VRefresh, strptr, strlen(strptr) + 1);
 	  }
 	  if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_MERGEDDPI))) {
@@ -1009,8 +1006,8 @@ SiSOptions(ScrnInfoPtr pScrn)
 	     }
 	     if(pSiS->UseSiSXinerama) {
 	        if((strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_SCR0))) {
-	           char *tempstr1 = malloc(strlen(strptr) + 1);
-	           char *tempstr2 = malloc(strlen(strptr) + 1);
+	           char *tempstr1 = xalloc(strlen(strptr) + 1);
+	           char *tempstr2 = xalloc(strlen(strptr) + 1);
 	           char *tempstr;
 		   int i, result;
 		   pSiS->MFBScr0LR = pSiS->MFBScr0TB = -1;
@@ -1037,8 +1034,8 @@ SiSOptions(ScrnInfoPtr pScrn)
 			"Bad or incomplete argument(s) for Option \"%s\"\n",
 			pSiS->Options[SiS_FIFT(pSiS->Options, OPTION_SCR0)].name);
 		   }
-		   free(tempstr1);
-		   free(tempstr2);
+		   xfree(tempstr1);
+		   xfree(tempstr2);
 	        } else if(xf86GetOptValBool(pSiS->Options, OPTION_CRT2ISSCRN0, &val)) {
 		   xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 			"Option \"%s\" is deprecated, use \"%s\"\n",
@@ -2420,14 +2417,6 @@ SiSOptions(ScrnInfoPtr pScrn)
         if(val){
                 xf86DrvMsg(pScrn->scrnIndex, X_INFO,"Using Special Timing 1366x768 with LVDS.\n");
                 pSiS->EnablePanel_1366x768 = TRUE;		
-        }
-    }
-    /* Ignore hotkey flag for video switch, switch on every
-     * XF86_APM_CAPABILITY_CHANGED event */
-    if(xf86GetOptValBool(pSiS->Options, OPTION_IGNOREHOTKEYFLAG, &val)){
-        if(val){
-                xf86DrvMsg(pScrn->scrnIndex, X_INFO,"Ignoring hotkey flag\n");
-                pSiS->IgnoreHotkeyFlag = TRUE;
         }
     }
 

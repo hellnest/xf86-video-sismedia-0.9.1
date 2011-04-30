@@ -171,7 +171,7 @@ void SIS6326InitVideo(ScreenPtr pScreen)
 		adaptors = &newAdaptor;
 	} else {
 		/* need to free this someplace */
-		newAdaptors = malloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
+		newAdaptors = xalloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
 		if(newAdaptors) {
 			memcpy(newAdaptors, adaptors, num_adaptors *
 				sizeof(XF86VideoAdaptorPtr));
@@ -186,7 +186,7 @@ void SIS6326InitVideo(ScreenPtr pScreen)
 	xf86XVScreenInit(pScreen, adaptors, num_adaptors);
 
     if(newAdaptors)
-	free(newAdaptors);
+	xfree(newAdaptors);
 }
 
 /* client libraries expect an encoding */
@@ -532,7 +532,7 @@ SIS6326SetupImageVideo(ScreenPtr pScreen)
        return NULL;
 #endif
 
-    if(!(adapt = calloc(1, sizeof(XF86VideoAdaptorRec) +
+    if(!(adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) +
                             sizeof(SISPortPrivRec) +
                             sizeof(DevUnion))))
        return NULL;
