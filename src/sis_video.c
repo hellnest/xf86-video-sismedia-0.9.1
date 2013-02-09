@@ -1124,8 +1124,8 @@ SISSetupImageVideo(ScreenPtr pScreen)
     adapt->SetPortAttribute = SISSetPortAttribute;
     adapt->GetPortAttribute = SISGetPortAttribute;
     adapt->QueryBestSize = SISQueryBestSize;
-    adapt->PutImage = SISPutImage;
-    adapt->ReputImage = SISReputImage;
+    adapt->PutImage = (PutImageFuncPtr)SISPutImage;
+    adapt->ReputImage = (ReputImageFuncPtr)SISReputImage;
     adapt->QueryImageAttributes = SISQueryImageAttributes;
 
     /* gotta uninit this someplace */
@@ -4089,8 +4089,12 @@ SISPutImage(
 static int
 SISReputImage(
   ScrnInfoPtr pScrn,
-  short drw_x, short drw_y,
-  RegionPtr clipBoxes, pointer data
+  int drw_x, int drw_y,
+  int16_t winbox_x, int16_t winbox_y,
+  int vid_w, int vid_h,
+  int drw_w, int drw_h,
+  RegionPtr clipBoxes, pointer data,
+  DrawablePtr pDraw
 ){
    SISPtr pSiS = SISPTR(pScrn);
    SISPortPrivPtr pPriv = (SISPortPrivPtr)data;
@@ -4110,8 +4114,8 @@ SISReputImage(
 
    memset(&overlay, 0, sizeof(overlay));
 
-   pPriv->drw_x = drw_x;
-   pPriv->drw_y = drw_y;
+   pPriv->drw_x = (short)drw_x;
+   pPriv->drw_y = (short)drw_y;
 
    result = SISCheckOverlay(pScrn, pPriv, &overlay);
 

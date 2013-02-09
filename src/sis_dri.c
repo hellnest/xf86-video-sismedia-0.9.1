@@ -785,7 +785,7 @@ SISDRIFinishScreenInit(ScreenPtr pScreen)
        saPriv->QueueLength = pSiS->cmdQueueSize; 
        saPriv->sharedWPoffset = *(pSiS->cmdQ_SharedWritePort);
        saPriv->agpCmdBufWriteOffset = 0xFFFFFFFF;
-       pSiS->cmdQ_SharedWritePortBackup = pSiS->cmdQ_SharedWritePort;
+       pSiS->cmdQ_SharedWritePortBackup = (unsigned int*)pSiS->cmdQ_SharedWritePort;
        pSiS->cmdQ_SharedWritePort = &(saPriv->sharedWPoffset);
 
        break;

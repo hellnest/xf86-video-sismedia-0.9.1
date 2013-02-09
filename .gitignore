@@ -1,0 +1,9 @@
+.*
+Makefile*
+config*
+*.lo
+*.la
+libtool
+man/sis.4
+nbproject/
+stamp-h1
